@@ -168,3 +168,55 @@ La app soporta **Español** (por defecto) e **Inglés**. El idioma se controla d
 - Regiones dinámicas usan `aria-live="polite"` o `"assertive"`
 - Íconos decorativos tienen `aria-hidden="true"`
 
+## Bono IA — Autocompletado de Publicaciones
+
+### Qué hace
+
+En la pantalla de **Nueva Publicación** (`/publish`), después de subir una foto del producto, aparece el botón **"Autocompletar con IA"**. Al pulsarlo, la app analiza la imagen y rellena automáticamente los campos del formulario:
+
+- Nombre del producto
+- Descripción
+- Categoría
+- Condición y detalle de condición
+- Precio sugerido
+
+Mientras el análisis está en curso se muestra un spinner con el texto *"Analizando imagen..."*. Al terminar, los campos quedan prellenados y el usuario puede ajustarlos antes de publicar.
+
+### Cómo está implementado (Ciclo 1)
+
+La lógica de IA está encapsulada en una única función en `src/lib/ai.ts`:
+
+```ts
+export async function analyzeImageWithAI(imageUrl: string): Promise<ProductSuggestion>
+```
+
+En Ciclo 1 esta función es un **stub**: espera entre 1.5 y 2.5 segundos (simulando la latencia de una API real) y devuelve valores predeterminados. El resto de la app —el botón, el spinner, el relleno del formulario— ya está completamente implementado y funciona de extremo a extremo.
+
+### Cómo conectar la IA real (Ciclo 2)
+
+Solo hay que reemplazar el cuerpo de `analyzeImageWithAI` con la llamada al servicio de visión que se elija. La firma y el tipo de retorno no cambian, por lo que la UI no requiere ninguna modificación:
+
+```ts
+// src/lib/ai.ts
+export async function analyzeImageWithAI(imageUrl: string): Promise<ProductSuggestion> {
+  // Ejemplo con OpenAI Vision:
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [{ role: "user", content: [
+      { type: "image_url", image_url: { url: imageUrl } },
+      { type: "text", text: "Describe este producto universitario en JSON: name, description, category, condition, conditionDetail, price." },
+    ]}],
+  });
+  return JSON.parse(response.choices[0].message.content);
+}
+```
+
+### Archivos relevantes
+
+| Archivo | Rol |
+|---|---|
+| `src/lib/ai.ts` | Función `analyzeImageWithAI` — único archivo a modificar en Ciclo 2 |
+| `src/components/publish/PublishProduct.tsx` | Botón, spinner y lógica de relleno del formulario |
+| `src/i18n/translations.ts` | Textos del botón y estados (`ai.autofill`, `ai.analyzing`, `ai.filled`) |
+| `src/__tests__/ai.test.ts` | 5 pruebas unitarias que verifican el contrato de la función |
+
