@@ -10,12 +10,12 @@ import { cn } from "@/lib/utils";
 
 function NavItem({
   href,
-  icon,
+  icon: Icon,
   label,
   active,
 }: {
   href: string;
-  icon: React.ReactNode;
+  icon: React.ElementType;
   label: string;
   active: boolean;
 }) {
@@ -30,11 +30,7 @@ function NavItem({
       )}
     >
       <div className={cn("transition-transform", active ? "mb-0.5" : "")}>
-        {React.cloneElement(icon as React.ReactElement, {
-          size: 24,
-          strokeWidth: active ? 2.5 : 2,
-          "aria-hidden": true,
-        })}
+        <Icon size={24} strokeWidth={active ? 2.5 : 2} aria-hidden={true} />
       </div>
       <span
         className={cn(
@@ -65,39 +61,39 @@ export function BottomNav() {
     >
       <NavItem
         href="/"
-        icon={<LayoutGrid />}
+        icon={LayoutGrid}
         label={t.nav.market}
         active={pathname === "/"}
       />
       <NavItem
         href="/purchases"
-        icon={<ShoppingBag />}
+        icon={ShoppingBag}
         label={t.nav.purchases}
         active={pathname === "/purchases"}
       />
       <NavItem
         href="/seller"
-        icon={<Store />}
+        icon={Store}
         label={t.nav.sell}
         active={pathname === "/seller"}
       />
       <NavItem
         href="/chat"
-        icon={<MessageCircle />}
+        icon={MessageCircle}
         label={t.nav.chat}
         active={pathname.startsWith("/chat")}
       />
       {userRole === "admin" ? (
         <NavItem
           href="/admin"
-          icon={<ShieldAlert />}
+          icon={ShieldAlert}
           label={t.nav.admin}
           active={pathname === "/admin"}
         />
       ) : (
         <NavItem
           href="/profile"
-          icon={<User />}
+          icon={User}
           label={t.nav.profile}
           active={pathname === "/profile"}
         />
