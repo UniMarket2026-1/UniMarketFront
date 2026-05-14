@@ -1,4 +1,5 @@
 import { Category, ProductCondition } from "./types";
+import { apiClient } from "./api";
 
 export interface ProductSuggestion {
   name: string;
@@ -10,43 +11,50 @@ export interface ProductSuggestion {
 }
 
 /**
- * Analyzes an image URL using AI and returns product suggestions.
+ * Analyzes a product using AI and returns suggestions.
+ * Now integrated with the backend Gemini API.
  *
- * CYCLE 1 NOTE: This is a stub implementation that returns predetermined mock values
- * after a simulated loading delay. To implement with a real AI service:
- * 1. Replace the body of this function with an actual API call
- *    (e.g., OpenAI Vision API, Google Gemini Vision, AWS Rekognition)
- * 2. Send the imageUrl to the AI service
- * 3. Parse the response and map it to ProductSuggestion
- * 4. The function signature and return type should remain unchanged
- *
- * @param imageUrl - URL of the product image to analyze
+ * @param productName - Name of the product
+ * @param category - Category of the product
+ * @param condition - Condition of the product
+ * @param price - Price of the product
  * @returns Promise resolving to ProductSuggestion with AI-generated data
  */
-export async function analyzeImageWithAI(imageUrl: string): Promise<ProductSuggestion> {
-  // TODO: Replace this stub with a real AI API call in Cycle 2+
-  // Example future implementation:
-  // const response = await fetch('/api/ai/analyze-image', {
-  //   method: 'POST',
-  //   body: JSON.stringify({ imageUrl }),
-  // });
-  // return response.json();
+export async function analyzeImageWithAI(
+  imageUrl: string,
+  productName?: string,
+  category?: string,
+  condition?: string,
+  price?: number,
+): Promise<ProductSuggestion> {
+  try {
+    // Use the backend API to generate AI-powered description
+    const suggestions = await apiClient.generateProductDescription(
+      productName || "Producto",
+      category || "Otros",
+      condition || "Poco usado",
+      price || 0,
+    );
 
-  console.log("Analyzing image:", imageUrl);
+    return {
+      name: productName || "Producto",
+      description: suggestions.description,
+      category: (category as Category) || "Otros",
+      condition: (condition as ProductCondition) || "Poco usado",
+      conditionDetail: suggestions.conditionDetail,
+      price: price || 0,
+    };
+  } catch (error) {
+    console.error("Error analyzing image with AI:", error);
 
-  // Simulate AI processing delay (1.5-2.5s)
-  const delay = 1500 + Math.random() * 1000;
-  await new Promise((resolve) => setTimeout(resolve, delay));
-
-  // Return predetermined mock suggestion for demonstration
-  return {
-    name: "Libro de Cálculo Diferencial",
-    description:
-      "Libro universitario en buen estado, ideal para cursos de matemáticas e ingeniería. Incluye ejercicios resueltos.",
-    category: "Libros",
-    condition: "Poco usado",
-    conditionDetail:
-      "Usado durante un semestre. Sin páginas rotas ni rasgadas. Algunas anotaciones menores en lápiz, fáciles de borrar.",
-    price: 35000,
-  };
+    // Fallback to default suggestion
+    return {
+      name: productName || "Producto",
+      description: `Producto en buenas condiciones disponible en la plataforma.`,
+      category: (category as Category) || "Otros",
+      condition: (condition as ProductCondition) || "Poco usado",
+      conditionDetail: `Este producto ${condition?.toLowerCase() || "poco usado"} está listo para usar.`,
+      price: price || 0,
+    };
+  }
 }

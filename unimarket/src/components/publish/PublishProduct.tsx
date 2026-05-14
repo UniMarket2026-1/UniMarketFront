@@ -106,7 +106,7 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
 
   /**
    * AI Auto-fill handler — BONUS IA
-   * Calls analyzeImageWithAI from @/lib/ai.ts (stub in Cycle 1, replace in Cycle 2)
+   * Calls analyzeImageWithAI from @/lib/ai.ts with Gemini API integration
    */
   const handleAIAutofill = async () => {
     if (!formData.imageUrl) {
@@ -115,7 +115,13 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
     }
     setIsAnalyzing(true);
     try {
-      const suggestion = await analyzeImageWithAI(formData.imageUrl);
+      const suggestion = await analyzeImageWithAI(
+        formData.imageUrl,
+        formData.name || "Producto",
+        formData.category,
+        formData.condition,
+        formData.price
+      );
       setFormData((prev) => ({
         ...prev,
         name: suggestion.name,
