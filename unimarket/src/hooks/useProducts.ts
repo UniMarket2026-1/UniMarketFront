@@ -22,9 +22,8 @@ export function useProducts() {
   const myProducts = products.filter((p) => p.sellerId === user.id);
 
   const saveProduct = useCallback(
-    (data: Partial<Product>) => {
-      handleSaveProduct(data);
-      toast.success(data.id ? "Producto actualizado correctamente" : "¡Producto publicado con éxito!");
+    async (data: Partial<Product>) => {
+      await handleSaveProduct(data);
     },
     [handleSaveProduct]
   );

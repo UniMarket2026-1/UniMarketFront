@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   X,
@@ -59,6 +59,7 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
   const [isUploading, setIsUploading] = useState(false);
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [completionPercentage, setCompletionPercentage] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // AI state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -81,13 +82,13 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
   const isValid =
     formData.name && formData.price > 0 && formData.imageUrl && formData.conditionDetail.length >= 20;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isValid) {
       toast.error("Por favor completa todos los campos obligatorios");
       return;
     }
-    onSave({ ...formData, ...(isEditing && initialData.id ? { id: initialData.id } : {}) });
+    await onSave({ ...formData, ...(isEditing && initialData.id ? { id: initialData.id } : {}) });
     toast.success(isEditing ? "Producto actualizado correctamente" : "¡Producto publicado con éxito!");
     router.push("/seller");
   };
@@ -102,6 +103,35 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
       setShowImagePicker(false);
       toast.success("Imagen cargada correctamente");
     }, 800);
+  };
+
+  const handleDeviceFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecciona un archivo de imagen válido");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const imageData = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error("No se pudo leer la imagen"));
+        reader.readAsDataURL(file);
+      });
+
+      setFormData((prev) => ({ ...prev, imageUrl: imageData }));
+      setShowImagePicker(false);
+      toast.success("Imagen cargada desde tu dispositivo");
+    } catch {
+      toast.error("No se pudo cargar la imagen");
+    } finally {
+      setIsUploading(false);
+      event.target.value = "";
+    }
   };
 
   /**
@@ -120,7 +150,6 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
         formData.name || "Producto",
         formData.category,
         formData.condition,
-        formData.price
       );
       setFormData((prev) => ({
         ...prev,
@@ -129,7 +158,6 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
         category: suggestion.category,
         condition: suggestion.condition,
         conditionDetail: suggestion.conditionDetail,
-        price: suggestion.price,
       }));
       toast.success(t.ai.filled);
     } catch {
@@ -613,12 +641,19 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
                 <div className="mb-4">
                   <button
                     type="button"
-                    onClick={() => handleImageUpload()}
+                    onClick={() => fileInputRef.current?.click()}
                     className="w-full p-4 border-2 border-dashed border-indigo-300 bg-indigo-50 rounded-xl hover:border-indigo-500 hover:bg-indigo-100 transition-all flex items-center justify-center gap-3 text-indigo-700 font-bold"
                   >
                     <Upload size={20} aria-hidden="true" />
                     <span>Subir desde mi dispositivo</span>
                   </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleDeviceFileSelect}
+                  />
                   <p className="text-xs text-slate-500 text-center mt-2">
                     O selecciona una imagen de ejemplo
                   </p>

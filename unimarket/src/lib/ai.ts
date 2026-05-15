@@ -7,7 +7,6 @@ export interface ProductSuggestion {
   category: Category;
   condition: ProductCondition;
   conditionDetail: string;
-  price: number;
 }
 
 /**
@@ -21,28 +20,24 @@ export interface ProductSuggestion {
  * @returns Promise resolving to ProductSuggestion with AI-generated data
  */
 export async function analyzeImageWithAI(
-  imageUrl: string,
+  imageData: string,
   productName?: string,
   category?: string,
   condition?: string,
-  price?: number,
 ): Promise<ProductSuggestion> {
   try {
-    // Use the backend API to generate AI-powered description
-    const suggestions = await apiClient.generateProductDescription(
-      productName || "Producto",
-      category || "Otros",
-      condition || "Poco usado",
-      price || 0,
-    );
+    const suggestions = await apiClient.analyzeProductImage(imageData, {
+      productName: productName || "Producto",
+      category: category || "Otros",
+      condition: condition || "Poco usado",
+    });
 
     return {
-      name: productName || "Producto",
+      name: suggestions.name || productName || "Producto",
       description: suggestions.description,
-      category: (category as Category) || "Otros",
-      condition: (condition as ProductCondition) || "Poco usado",
+      category: (suggestions.category as Category) || (category as Category) || "Otros",
+      condition: (suggestions.condition as ProductCondition) || (condition as ProductCondition) || "Poco usado",
       conditionDetail: suggestions.conditionDetail,
-      price: price || 0,
     };
   } catch (error) {
     console.error("Error analyzing image with AI:", error);
@@ -54,7 +49,6 @@ export async function analyzeImageWithAI(
       category: (category as Category) || "Otros",
       condition: (condition as ProductCondition) || "Poco usado",
       conditionDetail: `Este producto ${condition?.toLowerCase() || "poco usado"} está listo para usar.`,
-      price: price || 0,
     };
   }
 }

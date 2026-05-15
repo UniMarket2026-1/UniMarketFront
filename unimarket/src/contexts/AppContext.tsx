@@ -24,6 +24,7 @@ import {
   INITIAL_MESSAGES,
 } from "@/lib/mockData";
 import { Sale } from "@/lib/types";
+import { apiClient } from "@/lib/api";
 
 // ─── Shape ───────────────────────────────────────────────────────────────────
 
@@ -127,6 +128,47 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [notifPanelOpen, setNotifPanelOpen] = useState(false);
   const unreadCount = notifications.filter((n) => !n.read).length;
 
+  const normalizeUser = useCallback(
+    (apiUser: Partial<User>) => ({
+      ...MOCK_USER,
+      ...apiUser,
+      ratings: apiUser.ratings ?? [],
+      favorites: apiUser.favorites ?? MOCK_USER.favorites,
+      interests: apiUser.interests ?? MOCK_USER.interests,
+      notificationsEnabled: apiUser.notificationsEnabled ?? MOCK_USER.notificationsEnabled,
+      totalRating: apiUser.totalRating ?? MOCK_USER.totalRating,
+      ratingCount: apiUser.ratingCount ?? MOCK_USER.ratingCount,
+    }),
+    []
+  );
+
+  const loadRemoteState = useCallback(async () => {
+    try {
+      const productsResponse = await apiClient.getProducts(1, 100);
+      const remoteProducts = Array.isArray(productsResponse?.data)
+        ? productsResponse.data
+        : Array.isArray(productsResponse)
+        ? productsResponse
+        : [];
+
+      if (remoteProducts.length > 0) {
+        setProducts(remoteProducts);
+      }
+
+      const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+      if (token) {
+        const currentUser = await apiClient.getCurrentUser();
+        setUser(normalizeUser(currentUser));
+      }
+    } catch {
+      // Fall back to the bundled demo data when the API is unavailable.
+    }
+  }, [normalizeUser]);
+
+  useEffect(() => {
+    loadRemoteState();
+  }, [loadRemoteState]);
+
   // ── HU-01: Persist favorites in localStorage ──────────────────────────────
   useEffect(() => {
     const saved = localStorage.getItem("uni_market_favs");
@@ -136,19 +178,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toggleFavorite = useCallback(
-    (productId: string) => {
+    async (productId: string) => {
       const newFavs = user.favorites.includes(productId)
         ? user.favorites.filter((f) => f !== productId)
         : [...user.favorites, productId];
       setUser((prev) => ({ ...prev, favorites: newFavs }));
       localStorage.setItem("uni_market_favs", JSON.stringify(newFavs));
+
+      if (typeof window !== "undefined" && localStorage.getItem("auth_token")) {
+        try {
+          await apiClient.toggleFavorite(user.id, productId);
+        } catch {
+          // Keep the optimistic local state if the backend is temporarily unavailable.
+        }
+      }
     },
-    [user.favorites]
+    [user.favorites, user.id]
   );
 
   // ── HU-03: Rate seller ────────────────────────────────────────────────────
   const handleRate = useCallback(
-    (purchaseId: string, rating: number, comment: string) => {
+    async (purchaseId: string, rating: number, comment: string) => {
       const purchase = purchaseHistory.find((p) => p.purchaseId === purchaseId);
       if (!purchase) return;
 
@@ -181,8 +231,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setPurchaseHistory((prev) =>
         prev.map((p) => (p.purchaseId === purchaseId ? { ...p, rated: true } : p))
       );
+
+      if (typeof window !== "undefined" && localStorage.getItem("auth_token")) {
+        try {
+          await apiClient.createRating(purchase.id, purchase.sellerId, rating, comment);
+          await loadRemoteState();
+        } catch {
+          // Local UI already updated; backend sync will happen on the next successful request.
+        }
+      }
     },
-    [allRatings, purchaseHistory, user.id, user.name]
+    [allRatings, loadRemoteState, purchaseHistory, user.id, user.name]
   );
 
   // ── HU-04: Pre-fill publish form for resell ───────────────────────────────
@@ -200,22 +259,51 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // ── HU-07/10: Save (create or update) product ─────────────────────────────
   const handleSaveProduct = useCallback(
-    (data: Partial<Product>) => {
+    async (data: Partial<Product>) => {
       if (pendingEdit?.id) {
-        setProducts((prev) =>
-          prev.map((p) => (p.id === pendingEdit.id ? ({ ...p, ...data } as Product) : p))
-        );
+        if (typeof window !== "undefined" && localStorage.getItem("auth_token")) {
+          try {
+            const updated = await apiClient.updateProduct(pendingEdit.id, data);
+            setProducts((prev) => prev.map((p) => (p.id === pendingEdit.id ? updated : p)));
+          } catch {
+            setProducts((prev) =>
+              prev.map((p) => (p.id === pendingEdit.id ? ({ ...p, ...data } as Product) : p))
+            );
+          }
+        } else {
+          setProducts((prev) =>
+            prev.map((p) => (p.id === pendingEdit.id ? ({ ...p, ...data } as Product) : p))
+          );
+        }
       } else {
-        const newProduct: Product = {
-          ...data,
-          id: `p${Date.now()}`,
-          sellerId: user.id,
-          sellerName: user.name,
-          sellerRating: 5.0,
-          active: true,
-          createdAt: new Date().toISOString(),
-        } as Product;
-        setProducts((prev) => [newProduct, ...prev]);
+        if (typeof window !== "undefined" && localStorage.getItem("auth_token")) {
+          try {
+            const created = await apiClient.createProduct(data);
+            setProducts((prev) => [created, ...prev]);
+          } catch {
+            const newProduct: Product = {
+              ...data,
+              id: `p${Date.now()}`,
+              sellerId: user.id,
+              sellerName: user.name,
+              sellerRating: 5.0,
+              active: true,
+              createdAt: new Date().toISOString(),
+            } as Product;
+            setProducts((prev) => [newProduct, ...prev]);
+          }
+        } else {
+          const newProduct: Product = {
+            ...data,
+            id: `p${Date.now()}`,
+            sellerId: user.id,
+            sellerName: user.name,
+            sellerRating: 5.0,
+            active: true,
+            createdAt: new Date().toISOString(),
+          } as Product;
+          setProducts((prev) => [newProduct, ...prev]);
+        }
       }
       setPendingEdit(null);
     },

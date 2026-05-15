@@ -1,26 +1,40 @@
 "use client";
 
-import React from "react";
-import { usePathname } from "next/navigation";
-import { Bell, Globe } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { Bell, Globe, LogIn, LogOut, UserCircle2 } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { useLang } from "@/i18n/LanguageContext";
 import { cn } from "@/lib/utils";
+import { apiClient } from "@/lib/api";
+import { MOCK_USER } from "@/lib/mockData";
 
 export function Header() {
   const pathname = usePathname();
-  const { userRole, setUserRole, setNotifPanelOpen, notifPanelOpen, unreadCount } = useApp();
+  const router = useRouter();
+  const { user, setUser, userRole, setUserRole, setNotifPanelOpen, notifPanelOpen, unreadCount } = useApp();
   const { t, lang, setLang } = useLang();
+  const [hasToken, setHasToken] = useState(false);
 
-  // Hide on immersive pages (they have their own header)
-  if (pathname.startsWith("/publish") || pathname.startsWith("/product")) return null;
+  useEffect(() => {
+    setHasToken(Boolean(localStorage.getItem("auth_token")));
+  }, [pathname]);
+
+  // Hide on immersive/auth pages.
+  if (pathname.startsWith("/publish") || pathname.startsWith("/product") || pathname.startsWith("/login")) return null;
+
+  const handleLogout = () => {
+    apiClient.clearToken();
+    setHasToken(false);
+    setUser(MOCK_USER);
+    router.push("/");
+  };
 
   return (
     <header
       className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-20 px-4 py-3 flex items-center justify-between"
       role="banner"
     >
-      {/* Logo */}
       <div className="flex items-center gap-2">
         <div
           className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold"
@@ -32,7 +46,6 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-2">
-        {/* Language Toggle */}
         <button
           onClick={() => setLang(lang === "es" ? "en" : "es")}
           className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors text-slate-600"
@@ -43,7 +56,6 @@ export function Header() {
           <span className="text-[11px] font-bold uppercase">{lang === "es" ? "EN" : "ES"}</span>
         </button>
 
-        {/* Role Toggle */}
         <div
           className="flex bg-slate-100 p-1 rounded-lg gap-0.5"
           role="group"
@@ -75,7 +87,32 @@ export function Header() {
           </button>
         </div>
 
-        {/* Bell */}
+        <button
+          onClick={() => router.push("/login")}
+          className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 font-semibold hover:bg-indigo-100 transition-colors"
+        >
+          <UserCircle2 size={16} aria-hidden="true" />
+          {hasToken ? user.name : "Iniciar sesión"}
+        </button>
+
+        {hasToken ? (
+          <button
+            onClick={handleLogout}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition-colors"
+          >
+            <LogOut size={16} aria-hidden="true" />
+            Salir
+          </button>
+        ) : (
+          <button
+            onClick={() => router.push("/login")}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 text-white font-semibold hover:bg-slate-800 transition-colors"
+          >
+            <LogIn size={16} aria-hidden="true" />
+            Entrar
+          </button>
+        )}
+
         <button
           onClick={() => setNotifPanelOpen(!notifPanelOpen)}
           className="relative text-slate-500 hover:text-indigo-600 transition-colors p-1.5 rounded-lg hover:bg-slate-100"

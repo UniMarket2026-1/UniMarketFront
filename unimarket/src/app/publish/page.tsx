@@ -9,8 +9,8 @@ export default function PublishPage() {
   const { saveProduct } = useProducts();
   const router = useRouter();
 
-  const handleSave = (data: Parameters<typeof saveProduct>[0]) => {
-    saveProduct(data);
+  const handleSave = async (data: Parameters<typeof saveProduct>[0]) => {
+    await saveProduct(data);
     router.push("/seller");
   };
 

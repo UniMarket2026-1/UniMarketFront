@@ -109,6 +109,18 @@ class ApiClient {
     });
   }
 
+  async analyzeProductImage(imageData: string, hints?: { productName?: string; category?: string; condition?: string }) {
+    return this.request('/products/analyze-image', {
+      method: 'POST',
+      body: JSON.stringify({
+        imageData,
+        productName: hints?.productName,
+        category: hints?.category,
+        condition: hints?.condition,
+      }),
+    });
+  }
+
   async getSellerProducts(sellerId: string) {
     return this.request(`/products/seller/${sellerId}`);
   }
