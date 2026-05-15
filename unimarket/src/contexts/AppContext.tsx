@@ -444,7 +444,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setNotifications,
     purchaseHistory,
     setPurchaseHistory,
-    sales: MOCK_SALES,
+    sales: [],
     userRole,
     setUserRole,
     pendingEdit,
