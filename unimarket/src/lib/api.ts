@@ -1,4 +1,15 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+function normalizeApiBaseUrl(value: string | undefined) {
+  const fallback = 'http://localhost:3001/api';
+  if (!value) return fallback;
+
+  const trimmed = value.trim().replace(/\/+$/, '');
+  if (!trimmed) return fallback;
+
+  const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  return withScheme.endsWith('/api') ? withScheme : `${withScheme}/api`;
+}
+
+const API_BASE_URL = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_URL);
 
 class ApiClient {
   private token: string | null = null;
