@@ -14,10 +14,12 @@ import {
   ChevronRight,
   LogOut,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Category } from "@/lib/types";
 import { ImageWithFallback } from "@/components/shared/ImageWithFallback";
 import { useLang } from "@/i18n/LanguageContext";
 import { useApp } from "@/contexts/AppContext";
+import { apiClient } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
@@ -26,8 +28,15 @@ import Link from "next/link";
  */
 export function Profile() {
   const { t } = useLang();
-  const { user, handleToggleNotification, handleUpdateInterests } = useApp();
+  const router = useRouter();
+  const { user, handleToggleNotification, handleUpdateInterests, setUser } = useApp();
   const [activeTab, setActiveTab] = useState<"profile" | "favorites" | "settings">("profile");
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   const categories: { id: Category; icon: React.ReactNode; label: string }[] = [
     { id: "Libros", icon: <BookOpen size={16} aria-hidden="true" />, label: "Libros" },
@@ -43,6 +52,57 @@ export function Profile() {
     } else {
       handleUpdateInterests([...user.interests, cat]);
     }
+  };
+
+  const handleChangePassword = async () => {
+    setPasswordError("");
+    
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      setPasswordError("Todos los campos son requeridos");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Las contraseñas nuevas no coinciden");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError("La contraseña debe tener al menos 6 caracteres");
+      return;
+    }
+
+    try {
+      setPasswordLoading(true);
+      await apiClient.changePassword(oldPassword, newPassword);
+      setShowChangePasswordModal(false);
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      // Show success notification
+      alert("Contraseña actualizada exitosamente");
+    } catch (error: any) {
+      setPasswordError(error.message || "Error al cambiar la contraseña");
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    apiClient.clearToken();
+    setUser({
+      id: "",
+      name: "Invitado",
+      email: "",
+      role: "student",
+      favorites: [],
+      interests: [],
+      notificationsEnabled: true,
+      totalRating: 0,
+      ratingCount: 0,
+      ratings: [],
+    });
+    router.push("/");
   };
 
   // Products favorited by the user (from context products list)
@@ -131,11 +191,17 @@ export function Profile() {
               <LogOut size={18} className="text-slate-400" aria-hidden="true" />
               {t.profile.account}
             </h3>
-            <button className="w-full text-left py-3 border-b border-slate-50 text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors flex justify-between items-center">
+            <button 
+              onClick={() => setShowChangePasswordModal(true)}
+              className="w-full text-left py-3 border-b border-slate-50 text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors flex justify-between items-center"
+            >
               {t.profile.changePassword}
               <ChevronRight size={16} aria-hidden="true" />
             </button>
-            <button className="w-full text-left py-3 text-sm font-medium text-rose-600 hover:text-rose-700 transition-colors flex justify-between items-center">
+            <button 
+              onClick={handleLogout}
+              className="w-full text-left py-3 text-sm font-medium text-rose-600 hover:text-rose-700 transition-colors flex justify-between items-center"
+            >
               {t.profile.logOut}
               <LogOut size={16} aria-hidden="true" />
             </button>
@@ -255,6 +321,75 @@ export function Profile() {
               <p className="text-[10px] text-slate-400 font-medium italic">
                 {t.profile.interestsNote}
               </p>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Change Password Modal */}
+      {showChangePasswordModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 flex flex-col gap-6">
+            <h2 className="text-2xl font-bold text-slate-900">Cambiar Contraseña</h2>
+            
+            {passwordError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-sm">
+                {passwordError}
+              </div>
+            )}
+
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-bold text-slate-700">Contraseña Actual</label>
+                <input
+                  type="password"
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                  placeholder="Ingresa tu contraseña actual"
+                  className="px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  disabled={passwordLoading}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-bold text-slate-700">Nueva Contraseña</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Ingresa una nueva contraseña"
+                  className="px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  disabled={passwordLoading}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-bold text-slate-700">Confirmar Nueva Contraseña</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirma tu nueva contraseña"
+                  className="px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  disabled={passwordLoading}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowChangePasswordModal(false)}
+                disabled={passwordLoading}
+                className="flex-1 px-4 py-2 rounded-lg bg-slate-100 text-slate-800 font-bold hover:bg-slate-200 transition-colors disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleChangePassword}
+                disabled={passwordLoading}
+                className="flex-1 px-4 py-2 rounded-lg bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition-colors disabled:opacity-50"
+              >
+                {passwordLoading ? "Guardando..." : "Guardar"}
+              </button>
             </div>
           </div>
         </div>

@@ -12,17 +12,17 @@ import {
   Message,
   Category,
 } from "@/lib/types";
-import {
-  MOCK_PRODUCTS,
-  MOCK_USER,
-  MOCK_SALES,
-  MOCK_CHATS,
-  MOCK_REPORTS,
-  MOCK_RATINGS,
-  MOCK_NOTIFICATIONS,
-  MOCK_PURCHASE_HISTORY,
-  INITIAL_MESSAGES,
-} from "@/lib/mockData";
+// import {
+//   MOCK_PRODUCTS,
+//   MOCK_USER,
+//   MOCK_SALES,
+//   MOCK_CHATS,
+//   MOCK_REPORTS,
+//   MOCK_RATINGS,
+//   MOCK_NOTIFICATIONS,
+//   MOCK_PURCHASE_HISTORY,
+//   INITIAL_MESSAGES,
+// } from "@/lib/mockData";
 import { Sale } from "@/lib/types";
 import { apiClient } from "@/lib/api";
 
@@ -107,14 +107,25 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | null>(null);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
-  const [user, setUser] = useState<User>(MOCK_USER);
-  const [reports, setReports] = useState<Report[]>(MOCK_REPORTS);
-  const [allRatings, setAllRatings] = useState<Rating[]>(MOCK_RATINGS);
-  const [chats, setChats] = useState<Chat[]>(MOCK_CHATS);
-  const [messages, setMessages] = useState<Record<string, Message[]>>(INITIAL_MESSAGES);
-  const [notifications, setNotifications] = useState<AppNotification[]>(MOCK_NOTIFICATIONS);
-  const [purchaseHistory, setPurchaseHistory] = useState<PurchaseItem[]>(MOCK_PURCHASE_HISTORY);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [user, setUser] = useState<User>({
+    id: "",
+    name: "Invitado",
+    email: "",
+    role: "student",
+    favorites: [],
+    interests: [],
+    notificationsEnabled: true,
+    totalRating: 0,
+    ratingCount: 0,
+    ratings: [],
+  });
+  const [reports, setReports] = useState<Report[]>([]);
+  const [allRatings, setAllRatings] = useState<Rating[]>([]);
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [messages, setMessages] = useState<Record<string, Message[]>>({});
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [purchaseHistory, setPurchaseHistory] = useState<PurchaseItem[]>([]);
   const [userRole, setUserRole] = useState<"student" | "admin">("student");
   const [pendingEdit, setPendingEdit] = useState<Partial<Product> | null>(null);
 
@@ -130,14 +141,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const normalizeUser = useCallback(
     (apiUser: Partial<User>) => ({
-      ...MOCK_USER,
-      ...apiUser,
+      id: apiUser.id ?? "",
+      name: apiUser.name ?? "Invitado",
+      email: apiUser.email ?? "",
+      role: apiUser.role ?? "student",
       ratings: apiUser.ratings ?? [],
-      favorites: apiUser.favorites ?? MOCK_USER.favorites,
-      interests: apiUser.interests ?? MOCK_USER.interests,
-      notificationsEnabled: apiUser.notificationsEnabled ?? MOCK_USER.notificationsEnabled,
-      totalRating: apiUser.totalRating ?? MOCK_USER.totalRating,
-      ratingCount: apiUser.ratingCount ?? MOCK_USER.ratingCount,
+      favorites: apiUser.favorites ?? [],
+      interests: apiUser.interests ?? [],
+      notificationsEnabled: apiUser.notificationsEnabled ?? true,
+      totalRating: apiUser.totalRating ?? 0,
+      ratingCount: apiUser.ratingCount ?? 0,
     }),
     []
   );

@@ -8,7 +8,7 @@ import { useLang } from "@/i18n/LanguageContext";
 import { cn } from "@/lib/utils";
 import { apiClient } from "@/lib/api";
 import { MOCK_USER } from "@/lib/mockData";
-
+// import { MOCK_USER } from "@/lib/mockData";
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
@@ -27,7 +27,18 @@ export function Header() {
     apiClient.clearToken();
     setHasToken(false);
     setUser(MOCK_USER);
-    router.push("/");
+    setUser({
+      id: "",
+      name: "Invitado",
+      email: "",
+      role: "student",
+      favorites: [],
+      interests: [],
+      notificationsEnabled: true,
+      totalRating: 0,
+      ratingCount: 0,
+      ratings: [],
+    });
   };
 
   return (
@@ -70,13 +81,24 @@ export function Header() {
                 ? "bg-white text-indigo-600 shadow-sm"
                 : "text-slate-500"
             )}
-          >
-            {t.roles.student}
-          </button>
-          <button
-            onClick={() => setUserRole("admin")}
-            aria-pressed={userRole === "admin"}
             className={cn(
+              const handleLogout = () => {
+                apiClient.clearToken();
+                setHasToken(false);
+                setUser({
+                  id: "",
+                  name: "Invitado",
+                  email: "",
+                  role: "student",
+                  favorites: [],
+                  interests: [],
+                  notificationsEnabled: true,
+                  totalRating: 0,
+                  ratingCount: 0,
+                  ratings: [],
+                });
+                router.push("/");
+              };
               "px-2 py-1 rounded text-[10px] font-bold transition-all",
               userRole === "admin"
                 ? "bg-white text-rose-600 shadow-sm"

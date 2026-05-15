@@ -66,6 +66,13 @@ class ApiClient {
     return this.request('/auth/me');
   }
 
+  async changePassword(oldPassword: string, newPassword: string) {
+    return this.request('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ oldPassword, newPassword }),
+    });
+  }
+
   // Product endpoints
   async getProducts(page = 1, limit = 20, category?: string, condition?: string) {
     let url = `/products?page=${page}&limit=${limit}`;
