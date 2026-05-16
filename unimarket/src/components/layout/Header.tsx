@@ -72,27 +72,35 @@ export function Header() {
           role="group"
           aria-label="Cambiar rol de usuario"
         >
-          <button
-            onClick={() => setUserRole("student")}
-            aria-pressed={userRole === "student"}
-            className={cn(
-              "px-2 py-1 rounded text-[10px] font-bold transition-all",
-              userRole === "student" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500"
-            )}
-          >
-            {t.roles.student}
-          </button>
+          {user.role === "admin" ? (
+            <>
+              <button
+                onClick={() => setUserRole("student")}
+                aria-pressed={userRole === "student"}
+                className={cn(
+                  "px-2 py-1 rounded text-[10px] font-bold transition-all",
+                  userRole === "student" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500"
+                )}
+              >
+                {t.roles.student}
+              </button>
 
-          <button
-            onClick={() => setUserRole("admin")}
-            aria-pressed={userRole === "admin"}
-            className={cn(
-              "px-2 py-1 rounded text-[10px] font-bold transition-all",
-              userRole === "admin" ? "bg-white text-rose-600 shadow-sm" : "text-slate-500"
-            )}
-          >
-            {t.roles.admin}
-          </button>
+              <button
+                onClick={() => setUserRole("admin")}
+                aria-pressed={userRole === "admin"}
+                className={cn(
+                  "px-2 py-1 rounded text-[10px] font-bold transition-all",
+                  userRole === "admin" ? "bg-white text-rose-600 shadow-sm" : "text-slate-500"
+                )}
+              >
+                {t.roles.admin}
+              </button>
+            </>
+          ) : (
+            <span className="px-2 py-1 rounded text-[10px] font-bold text-slate-600">
+              {t.roles.student}
+            </span>
+          )}
         </div>
 
         <button
