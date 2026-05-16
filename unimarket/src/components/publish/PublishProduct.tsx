@@ -22,6 +22,13 @@ import { useLang } from "@/i18n/LanguageContext";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { analyzeImageWithAI } from "@/lib/ai";
+import {
+  GOOGLE_MAPS_API_KEY,
+  MAX_IMAGE_SIZE_BYTES,
+  MAX_IMAGE_SIZE_MB,
+  PRODUCT_CATEGORIES,
+  PRODUCT_CONDITIONS,
+} from "@/lib/constants";
 
 interface PublishProductProps {
   initialData?: Partial<Product>;
@@ -53,6 +60,7 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
     condition: (initialData.condition ?? "Poco usado") as ProductCondition,
     conditionDetail: initialData.conditionDetail ?? "",
     imageUrl: initialData.imageUrl ?? "",
+    meetingPoint: initialData.meetingPoint ?? "",
   });
 
   const [quickMode, setQuickMode] = useState(false);
@@ -64,8 +72,8 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
   // AI state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const categories: Category[] = ["Libros", "Tecnología", "Muebles", "Ropa", "Otros"];
-  const conditions: ProductCondition[] = ["Nuevo", "Poco usado", "Usado"];
+  const categories: Category[] = PRODUCT_CATEGORIES;
+  const conditions: ProductCondition[] = PRODUCT_CONDITIONS;
 
   // Completion progress — HU-10
   useEffect(() => {
@@ -80,7 +88,11 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
   }, [formData]);
 
   const isValid =
-    formData.name && formData.price > 0 && formData.imageUrl && formData.conditionDetail.length >= 20;
+    formData.name &&
+    formData.price > 0 &&
+    formData.imageUrl &&
+    formData.conditionDetail.length >= 20 &&
+    formData.meetingPoint.trim().length >= 5;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,6 +123,12 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
 
     if (!file.type.startsWith("image/")) {
       toast.error("Selecciona un archivo de imagen válido");
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      toast.error(`La imagen excede ${MAX_IMAGE_SIZE_MB}MB. Selecciona una imagen más liviana.`);
+      event.target.value = "";
       return;
     }
 
@@ -463,6 +481,41 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
               </select>
             </div>
           </div>
+
+          <div className="flex flex-col gap-2">
+            <label htmlFor="meeting-point" className="text-sm font-bold text-slate-800">
+              Punto de encuentro *
+            </label>
+            <input
+              id="meeting-point"
+              type="text"
+              placeholder="Ej: Biblioteca General, entrada principal"
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+              value={formData.meetingPoint}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, meetingPoint: e.target.value }))
+              }
+              required
+              minLength={5}
+            />
+            <p className="text-xs text-slate-500">
+              El comprador verá este punto para acordar la entrega.
+            </p>
+
+            {formData.meetingPoint.trim().length >= 5 && (
+              <div className="overflow-hidden rounded-xl border border-slate-200 h-56">
+                <iframe
+                  title="Mapa del punto de encuentro"
+                  className="w-full h-full"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  src={`https://www.google.com/maps/embed/v1/place?key=${GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(
+                    formData.meetingPoint
+                  )}`}
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Condition — HU-09 */}
@@ -655,7 +708,7 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
                     onChange={handleDeviceFileSelect}
                   />
                   <p className="text-xs text-slate-500 text-center mt-2">
-                    O selecciona una imagen de ejemplo
+                    O selecciona una imagen de ejemplo (máx. {MAX_IMAGE_SIZE_MB}MB)
                   </p>
                 </div>
                 <div className="grid grid-cols-3 gap-3">

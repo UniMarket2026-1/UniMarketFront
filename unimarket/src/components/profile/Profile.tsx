@@ -10,7 +10,14 @@ import {
   Sofa,
   Shirt,
   Package,
+  Monitor,
+  Dumbbell,
+  Palette,
+  Music,
+  Utensils,
+  Gem,
   CheckCircle2,
+  AlertCircle,
   ChevronRight,
   LogOut,
 } from "lucide-react";
@@ -22,6 +29,7 @@ import { useApp } from "@/contexts/AppContext";
 import { apiClient } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { PRODUCT_CATEGORIES } from "@/lib/constants";
 
 /**
  * User profile with favorites, notification settings, and interests — HU-01, HU-05
@@ -38,13 +46,25 @@ export function Profile() {
   const [passwordError, setPasswordError] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
 
-  const categories: { id: Category; icon: React.ReactNode; label: string }[] = [
-    { id: "Libros", icon: <BookOpen size={16} aria-hidden="true" />, label: "Libros" },
-    { id: "Tecnología", icon: <Laptop size={16} aria-hidden="true" />, label: "Tecnología" },
-    { id: "Muebles", icon: <Sofa size={16} aria-hidden="true" />, label: "Muebles" },
-    { id: "Ropa", icon: <Shirt size={16} aria-hidden="true" />, label: "Ropa" },
-    { id: "Otros", icon: <Package size={16} aria-hidden="true" />, label: "Otros" },
-  ];
+  const iconByCategory: Record<Category, React.ReactNode> = {
+    Libros: <BookOpen size={16} aria-hidden="true" />,
+    "Tecnología": <Laptop size={16} aria-hidden="true" />,
+    Muebles: <Sofa size={16} aria-hidden="true" />,
+    Ropa: <Shirt size={16} aria-hidden="true" />,
+    Electrónica: <Monitor size={16} aria-hidden="true" />,
+    Deportes: <Dumbbell size={16} aria-hidden="true" />,
+    Arte: <Palette size={16} aria-hidden="true" />,
+    "Instrumentos Musicales": <Music size={16} aria-hidden="true" />,
+    Cocina: <Utensils size={16} aria-hidden="true" />,
+    Accesorios: <Gem size={16} aria-hidden="true" />,
+    Otros: <Package size={16} aria-hidden="true" />,
+  };
+
+  const categories: { id: Category; icon: React.ReactNode; label: string }[] = PRODUCT_CATEGORIES.map((id) => ({
+    id,
+    icon: iconByCategory[id],
+    label: id,
+  }));
 
   const handleToggleInterest = (cat: Category) => {
     if (user.interests.includes(cat)) {
@@ -95,6 +115,7 @@ export function Profile() {
       name: "Invitado",
       email: "",
       role: "student",
+      emailVerified: false,
       favorites: [],
       interests: [],
       notificationsEnabled: true,
@@ -177,11 +198,36 @@ export function Profile() {
               <Shield size={18} className="text-indigo-600" aria-hidden="true" />
               {t.profile.verification}
             </h3>
-            <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-xl border border-emerald-100">
-              <CheckCircle2 className="text-emerald-600 shrink-0" size={24} aria-hidden="true" />
+            <div
+              className={cn(
+                "flex items-center gap-3 p-3 rounded-xl border",
+                user.emailVerified
+                  ? "bg-emerald-50 border-emerald-100"
+                  : "bg-amber-50 border-amber-100"
+              )}
+            >
+              {user.emailVerified ? (
+                <CheckCircle2 className="text-emerald-600 shrink-0" size={24} aria-hidden="true" />
+              ) : (
+                <AlertCircle className="text-amber-600 shrink-0" size={24} aria-hidden="true" />
+              )}
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-emerald-800">{t.profile.verified}</span>
-                <span className="text-xs text-emerald-600 font-medium">{t.profile.verifiedDesc}</span>
+                <span
+                  className={cn(
+                    "text-sm font-bold",
+                    user.emailVerified ? "text-emerald-800" : "text-amber-800"
+                  )}
+                >
+                  {user.emailVerified ? t.profile.verified : t.profile.notVerified}
+                </span>
+                <span
+                  className={cn(
+                    "text-xs font-medium",
+                    user.emailVerified ? "text-emerald-600" : "text-amber-700"
+                  )}
+                >
+                  {user.emailVerified ? t.profile.verifiedDesc : t.profile.notVerifiedDesc}
+                </span>
               </div>
             </div>
           </div>

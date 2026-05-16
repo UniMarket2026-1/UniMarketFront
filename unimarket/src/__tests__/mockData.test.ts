@@ -32,7 +32,19 @@ describe("MOCK_PRODUCTS — HU-01, HU-07, HU-09", () => {
   });
 
   it("products have valid categories", () => {
-    const validCategories = ["Libros", "Tecnología", "Muebles", "Ropa", "Otros"];
+    const validCategories = [
+      "Libros",
+      "Tecnología",
+      "Muebles",
+      "Ropa",
+      "Electrónica",
+      "Deportes",
+      "Arte",
+      "Instrumentos Musicales",
+      "Cocina",
+      "Accesorios",
+      "Otros",
+    ];
     MOCK_PRODUCTS.forEach((p) => {
       expect(validCategories).toContain(p.category);
     });

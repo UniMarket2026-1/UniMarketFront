@@ -1,5 +1,6 @@
 import { Category, ProductCondition } from "./types";
 import { apiClient } from "./api";
+import { PRODUCT_CATEGORIES, PRODUCT_CONDITIONS } from "./constants";
 
 export interface ProductSuggestion {
   name: string;
@@ -7,6 +8,16 @@ export interface ProductSuggestion {
   category: Category;
   condition: ProductCondition;
   conditionDetail: string;
+}
+
+function sanitizeCategory(value: unknown, fallback: Category): Category {
+  if (typeof value !== "string") return fallback;
+  return (PRODUCT_CATEGORIES.includes(value as Category) ? value : fallback) as Category;
+}
+
+function sanitizeCondition(value: unknown, fallback: ProductCondition): ProductCondition {
+  if (typeof value !== "string") return fallback;
+  return (PRODUCT_CONDITIONS.includes(value as ProductCondition) ? value : fallback) as ProductCondition;
 }
 
 /**
@@ -25,19 +36,24 @@ export async function analyzeImageWithAI(
   category?: string,
   condition?: string,
 ): Promise<ProductSuggestion> {
+  const safeFallbackCategory = sanitizeCategory(category, "Otros");
+  const safeFallbackCondition = sanitizeCondition(condition, "Poco usado");
+
   try {
     const suggestions = await apiClient.analyzeProductImage(imageData, {
-      productName: productName || "Producto",
-      category: category || "Otros",
-      condition: condition || "Poco usado",
+      productName: productName?.trim() || undefined,
+      category: safeFallbackCategory,
+      condition: safeFallbackCondition,
     });
 
     return {
       name: suggestions.name || productName || "Producto",
-      description: suggestions.description,
-      category: (suggestions.category as Category) || (category as Category) || "Otros",
-      condition: (suggestions.condition as ProductCondition) || (condition as ProductCondition) || "Poco usado",
-      conditionDetail: suggestions.conditionDetail,
+      description: suggestions.description || `Producto en buenas condiciones disponible en la plataforma.`,
+      category: sanitizeCategory(suggestions.category, safeFallbackCategory),
+      condition: sanitizeCondition(suggestions.condition, safeFallbackCondition),
+      conditionDetail:
+        suggestions.conditionDetail ||
+        `Este producto ${safeFallbackCondition.toLowerCase()} está listo para usar.`,
     };
   } catch (error) {
     console.error("Error analyzing image with AI:", error);
@@ -46,9 +62,9 @@ export async function analyzeImageWithAI(
     return {
       name: productName || "Producto",
       description: `Producto en buenas condiciones disponible en la plataforma.`,
-      category: (category as Category) || "Otros",
-      condition: (condition as ProductCondition) || "Poco usado",
-      conditionDetail: `Este producto ${condition?.toLowerCase() || "poco usado"} está listo para usar.`,
+      category: safeFallbackCategory,
+      condition: safeFallbackCondition,
+      conditionDetail: `Este producto ${safeFallbackCondition.toLowerCase()} está listo para usar.`,
     };
   }
 }

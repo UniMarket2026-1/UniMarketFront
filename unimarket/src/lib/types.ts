@@ -1,5 +1,16 @@
 export type ProductCondition = "Nuevo" | "Poco usado" | "Usado";
-export type Category = "Libros" | "Tecnología" | "Muebles" | "Ropa" | "Otros";
+export type Category =
+  | "Libros"
+  | "Tecnología"
+  | "Muebles"
+  | "Ropa"
+  | "Electrónica"
+  | "Deportes"
+  | "Arte"
+  | "Instrumentos Musicales"
+  | "Cocina"
+  | "Accesorios"
+  | "Otros";
 
 export interface Product {
   id: string;
@@ -13,7 +24,9 @@ export interface Product {
   sellerId: string;
   sellerName: string;
   sellerRating: number;
+  sellerVerified?: boolean;
   active: boolean;
+  meetingPoint?: string;
   createdAt: string;
 }
 
@@ -28,6 +41,7 @@ export interface User {
   ratings: Rating[];
   totalRating: number;
   ratingCount: number;
+  emailVerified?: boolean;
   suspended?: boolean;
   suspensionReason?: string;
   warnings?: number;

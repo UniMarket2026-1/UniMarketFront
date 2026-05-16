@@ -14,7 +14,7 @@ export function useProducts() {
     products,
     user,
     handleSaveProduct,
-    handleDeactivate,
+    handleDeleteProduct,
     handleActivate,
     setPendingEdit,
   } = useApp();
@@ -28,12 +28,12 @@ export function useProducts() {
     [handleSaveProduct]
   );
 
-  const deactivateProduct = useCallback(
-    (id: string) => {
-      handleDeactivate(id);
-      toast.info("Publicación desactivada");
+  const deleteProduct = useCallback(
+    async (id: string) => {
+      await handleDeleteProduct(id);
+      toast.success("Publicación eliminada");
     },
-    [handleDeactivate]
+    [handleDeleteProduct]
   );
 
   const activateProduct = useCallback(
@@ -59,7 +59,7 @@ export function useProducts() {
     products,
     myProducts,
     saveProduct,
-    deactivateProduct,
+    deleteProduct,
     activateProduct,
     prepareEdit,
     prepareNew,

@@ -10,6 +10,7 @@ import { useFilters } from "@/hooks/useFilters";
 import { useFavorites } from "@/hooks/useFavorites";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { PRODUCT_CATEGORIES } from "@/lib/constants";
 
 interface MarketplaceProps {
   products: Product[];
@@ -39,7 +40,7 @@ export function Marketplace({ products, currentUserId }: MarketplaceProps) {
   const [activeTab, setActiveTab] = useState<"all" | "favorites">("all");
   const [showFilters, setShowFilters] = useState(false);
 
-  const categories = ["Todos", "Libros", "Tecnología", "Muebles", "Ropa", "Otros"] as const;
+  const categories = ["Todos", ...PRODUCT_CATEGORIES] as const;
   const conditions = ["Todos", "Nuevo", "Poco usado", "Usado"] as const;
 
   const favoriteProducts = filteredProducts.filter((p) => favorites.includes(p.id));

@@ -10,6 +10,7 @@ import {
   Info,
   Star,
   ShieldCheck,
+  ShieldAlert,
   MapPin,
   Flag,
 } from "lucide-react";
@@ -209,9 +210,20 @@ export function ProductDetail({ product, sellerRatings, currentUserId }: Product
             </div>
             <div className="flex flex-col items-end">
               <span className="text-xs text-slate-400">{t.product.since}</span>
-              <div className="flex items-center gap-1 text-emerald-600">
-                <ShieldCheck size={14} aria-hidden="true" />
-                <span className="text-xs font-medium">{t.product.verified}</span>
+              <div
+                className={cn(
+                  "flex items-center gap-1",
+                  product.sellerVerified ? "text-emerald-600" : "text-amber-600"
+                )}
+              >
+                {product.sellerVerified ? (
+                  <ShieldCheck size={14} aria-hidden="true" />
+                ) : (
+                  <ShieldAlert size={14} aria-hidden="true" />
+                )}
+                <span className="text-xs font-medium">
+                  {product.sellerVerified ? t.product.verified : t.product.notVerified}
+                </span>
               </div>
             </div>
           </div>
@@ -271,7 +283,7 @@ export function ProductDetail({ product, sellerRatings, currentUserId }: Product
 
         <div className="flex items-center gap-2 text-slate-500 text-sm italic">
           <MapPin size={16} aria-hidden="true" />
-          <span>{t.product.location}</span>
+          <span>{product.meetingPoint || t.product.locationFallback}</span>
         </div>
       </div>
 

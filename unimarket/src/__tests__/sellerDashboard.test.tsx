@@ -35,7 +35,7 @@ jest.mock("@/i18n/LanguageContext", () => ({
         sold: "Vendidos",
         active_badge: "Activo",
         paused_badge: "Pausado",
-        deactivate: "Desactivar",
+        delete: "Eliminar",
         activate: "Activar",
         empty: "Sin publicaciones aún",
         emptyDesc: "Publica tu primer producto.",
@@ -106,7 +106,7 @@ const SALES: Sale[] = [
 ];
 
 const onEdit = jest.fn();
-const onDeactivate = jest.fn();
+const onDelete = jest.fn();
 const onActivate = jest.fn();
 const onNew = jest.fn();
 
@@ -116,7 +116,7 @@ function renderDashboard() {
       myProducts={PRODUCTS}
       sales={SALES}
       onEdit={onEdit}
-      onDeactivate={onDeactivate}
+      onDelete={onDelete}
       onActivate={onActivate}
       onNewProduct={onNew}
     />
@@ -143,10 +143,10 @@ describe("SellerDashboard listings — HU-07, HU-10", () => {
     expect(screen.getByText("Pausado")).toBeInTheDocument();
   });
 
-  it("calls onDeactivate when Desactivar is clicked — HU-10", () => {
+  it("calls onDelete when Eliminar is clicked — HU-10", () => {
     renderDashboard();
-    fireEvent.click(screen.getByText("Desactivar"));
-    expect(onDeactivate).toHaveBeenCalledWith("p1");
+    fireEvent.click(screen.getByText("Eliminar"));
+    expect(onDelete).toHaveBeenCalledWith("p1");
   });
 
   it("calls onActivate when Activar is clicked — HU-10", () => {
@@ -205,7 +205,7 @@ describe("SellerDashboard sales history — HU-08", () => {
         myProducts={PRODUCTS}
         sales={[]}
         onEdit={onEdit}
-        onDeactivate={onDeactivate}
+        onDelete={onDelete}
         onActivate={onActivate}
         onNewProduct={onNew}
       />

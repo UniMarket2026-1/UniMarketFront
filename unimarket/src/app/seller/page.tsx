@@ -6,7 +6,7 @@ import { SellerDashboard } from "@/components/seller/SellerDashboard";
 
 export default function SellerPage() {
   const { sales } = useApp();
-  const { myProducts, deactivateProduct, activateProduct, prepareEdit, prepareNew } = useProducts();
+  const { myProducts, deleteProduct, activateProduct, prepareEdit, prepareNew } = useProducts();
   const router = useRouter();
 
   return (
@@ -17,7 +17,7 @@ export default function SellerPage() {
         prepareEdit(product);
         router.push("/publish");
       }}
-      onDeactivate={deactivateProduct}
+      onDelete={deleteProduct}
       onActivate={activateProduct}
       onNewProduct={() => {
         prepareNew();

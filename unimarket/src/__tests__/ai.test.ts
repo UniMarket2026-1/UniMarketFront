@@ -22,7 +22,19 @@ describe("analyzeImageWithAI — Bonus IA (HU-07 bonus)", () => {
 
   it("returns a valid category", async () => {
     const result = await analyzeImageWithAI("test.jpg");
-    const validCategories = ["Libros", "Tecnología", "Muebles", "Ropa", "Otros"];
+    const validCategories = [
+      "Libros",
+      "Tecnología",
+      "Muebles",
+      "Ropa",
+      "Electrónica",
+      "Deportes",
+      "Arte",
+      "Instrumentos Musicales",
+      "Cocina",
+      "Accesorios",
+      "Otros",
+    ];
     expect(validCategories).toContain(result.category);
   });
 

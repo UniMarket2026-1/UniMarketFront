@@ -79,7 +79,7 @@ interface AppContextType {
 
   // Actions – Products
   handleSaveProduct: (data: Partial<Product>) => void;
-  handleDeactivate: (id: string) => void;
+  handleDeleteProduct: (id: string) => Promise<void>;
   handleActivate: (id: string) => void;
 
   // Actions – HU-12 Reports
@@ -113,6 +113,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     name: "Invitado",
     email: "",
     role: "student",
+    emailVerified: false,
     favorites: [],
     interests: [],
     notificationsEnabled: true,
@@ -145,6 +146,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       name: apiUser.name ?? "Invitado",
       email: apiUser.email ?? "",
       role: apiUser.role ?? "student",
+      emailVerified: apiUser.emailVerified ?? false,
       ratings: apiUser.ratings ?? [],
       favorites: apiUser.favorites ?? [],
       interests: apiUser.interests ?? [],
@@ -323,9 +325,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [pendingEdit, user.id, user.name]
   );
 
-  const handleDeactivate = useCallback((id: string) => {
-    setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, active: false } : p)));
-  }, []);
+  const handleDeleteProduct = useCallback(async (id: string) => {
+    const prevProducts = products;
+    setProducts((current) => current.filter((p) => p.id !== id));
+
+    if (typeof window !== "undefined" && localStorage.getItem("auth_token")) {
+      try {
+        await apiClient.deleteProduct(id);
+      } catch {
+        setProducts(prevProducts);
+      }
+    }
+  }, [products]);
 
   const handleActivate = useCallback((id: string) => {
     setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, active: true } : p)));
@@ -461,7 +472,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     handleRate,
     handleResell,
     handleSaveProduct,
-    handleDeactivate,
+    handleDeleteProduct,
     handleActivate,
     openReport,
     handleSubmitReport,

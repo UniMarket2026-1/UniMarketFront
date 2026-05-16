@@ -12,7 +12,7 @@ interface SellerDashboardProps {
   myProducts: Product[];
   sales: Sale[];
   onEdit: (product: Product) => void;
-  onDeactivate: (id: string) => void;
+  onDelete: (id: string) => void;
   onActivate: (id: string) => void;
   onNewProduct: () => void;
 }
@@ -24,7 +24,7 @@ export function SellerDashboard({
   myProducts,
   sales,
   onEdit,
-  onDeactivate,
+  onDelete,
   onActivate,
   onNewProduct,
 }: SellerDashboardProps) {
@@ -166,12 +166,12 @@ export function SellerDashboard({
                     </button>
                     {product.active ? (
                       <button
-                        onClick={() => onDeactivate(product.id)}
+                        onClick={() => onDelete(product.id)}
                         className="flex-1 bg-slate-50 text-slate-500 text-xs font-bold py-2 rounded-lg hover:bg-rose-50 hover:text-rose-600 transition-colors flex items-center justify-center gap-1.5"
-                        aria-label={`${t.seller.deactivate} ${product.name}`}
+                        aria-label={`${t.seller.delete} ${product.name}`}
                       >
                         <XCircle size={16} aria-hidden="true" />
-                        {t.seller.deactivate}
+                        {t.seller.delete}
                       </button>
                     ) : (
                       <button
