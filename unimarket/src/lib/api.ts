@@ -84,6 +84,19 @@ class ApiClient {
     });
   }
 
+  async sendVerificationCode() {
+    return this.request('/auth/send-verification-code', {
+      method: 'POST',
+    });
+  }
+
+  async verifyEmailCode(code: string) {
+    return this.request('/auth/verify-email-code', {
+      method: 'POST',
+      body: JSON.stringify({ code }),
+    });
+  }
+
   // Product endpoints
   async getProducts(page = 1, limit = 20, category?: string, condition?: string) {
     let url = `/products?page=${page}&limit=${limit}`;

@@ -9,6 +9,7 @@ import { useApp } from "@/contexts/AppContext";
 import { User } from "@/lib/types";
 
 function normalizeUser(user: Partial<User>) {
+  const isUniandes = (user.email ?? "").toLowerCase().endsWith("@uniandes.edu.co");
   return {
     id: user.id ?? "u1",
     name: user.name ?? "Usuario",
@@ -20,6 +21,8 @@ function normalizeUser(user: Partial<User>) {
     totalRating: user.totalRating ?? 0,
     ratingCount: user.ratingCount ?? 0,
     ratings: user.ratings ?? [],
+    emailVerified: user.emailVerified ?? false,
+    uniandesVerified: user.uniandesVerified ?? isUniandes,
   } as User;
 }
 

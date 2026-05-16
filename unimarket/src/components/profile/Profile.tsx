@@ -18,6 +18,7 @@ import {
   Gem,
   CheckCircle2,
   AlertCircle,
+  BadgeCheck,
   ChevronRight,
   LogOut,
 } from "lucide-react";
@@ -45,6 +46,9 @@ export function Profile() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verificationLoading, setVerificationLoading] = useState(false);
+  const [verificationMessage, setVerificationMessage] = useState("");
 
   const iconByCategory: Record<Category, React.ReactNode> = {
     Libros: <BookOpen size={16} aria-hidden="true" />,
@@ -65,6 +69,8 @@ export function Profile() {
     icon: iconByCategory[id],
     label: id,
   }));
+
+  const isUniandes = (user.email ?? "").toLowerCase().endsWith("@uniandes.edu.co");
 
   const handleToggleInterest = (cat: Category) => {
     if (user.interests.includes(cat)) {
@@ -105,6 +111,45 @@ export function Profile() {
       setPasswordError(error.message || "Error al cambiar la contraseña");
     } finally {
       setPasswordLoading(false);
+    }
+  };
+
+  const handleSendVerificationCode = async () => {
+    try {
+      setVerificationLoading(true);
+      setVerificationMessage("");
+      const response = await apiClient.sendVerificationCode();
+      setVerificationMessage(response.message || "Código enviado");
+    } catch (error: any) {
+      setVerificationMessage(error.message || "No se pudo enviar el código");
+    } finally {
+      setVerificationLoading(false);
+    }
+  };
+
+  const handleVerifyEmail = async () => {
+    if (verificationCode.trim().length < 4) {
+      setVerificationMessage("Ingresa el código que llegó a tu correo");
+      return;
+    }
+
+    try {
+      setVerificationLoading(true);
+      setVerificationMessage("");
+      const updatedUser = await apiClient.verifyEmailCode(verificationCode.trim());
+      setUser((prev) => ({
+        ...prev,
+        ...updatedUser,
+        emailVerified: updatedUser.emailVerified ?? true,
+        uniandesVerified:
+          updatedUser.uniandesVerified ?? (updatedUser.email ? updatedUser.email.toLowerCase().endsWith("@uniandes.edu.co") : false),
+      }));
+      setVerificationCode("");
+      setVerificationMessage("Correo verificado correctamente");
+    } catch (error: any) {
+      setVerificationMessage(error.message || "Código inválido");
+    } finally {
+      setVerificationLoading(false);
     }
   };
 
@@ -228,6 +273,56 @@ export function Profile() {
                 >
                   {user.emailVerified ? t.profile.verifiedDesc : t.profile.notVerifiedDesc}
                 </span>
+              </div>
+            </div>
+
+            {isUniandes && (
+              <div className="flex items-center gap-3 p-3 rounded-xl border bg-amber-50 border-amber-100">
+                <BadgeCheck className="text-amber-600 shrink-0" size={24} aria-hidden="true" />
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold text-amber-800">{t.profile.uniandesBadge}</span>
+                  <span className="text-xs text-amber-700 font-medium">{t.profile.uniandesDesc}</span>
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-3 pt-2 border-t border-slate-100">
+              <p className="text-sm font-semibold text-slate-700">{t.profile.verificationFlow}</p>
+              <p className="text-xs text-slate-500">{t.profile.codeHint}</p>
+              {verificationMessage && (
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-700">
+                  {verificationMessage}
+                </div>
+              )}
+              <div className="flex flex-col gap-2">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={verificationCode}
+                  onChange={(event) => setVerificationCode(event.target.value)}
+                  placeholder={t.profile.verificationPlaceholder}
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all tracking-[0.3em] text-center font-bold"
+                  maxLength={6}
+                  disabled={verificationLoading || user.emailVerified}
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSendVerificationCode}
+                    disabled={verificationLoading || user.emailVerified}
+                    className="px-4 py-3 rounded-xl bg-indigo-600 text-white font-bold text-sm disabled:opacity-60"
+                  >
+                    {verificationLoading ? "Enviando..." : user.emailVerified ? "Ya verificado" : t.profile.sendCode}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleVerifyEmail}
+                    disabled={verificationLoading || user.emailVerified}
+                    className="px-4 py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm disabled:opacity-60"
+                  >
+                    {verificationLoading ? "Verificando..." : t.profile.verifyCode}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

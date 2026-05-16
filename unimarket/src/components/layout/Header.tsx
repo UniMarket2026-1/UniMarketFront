@@ -32,6 +32,8 @@ export function Header() {
       name: "Invitado",
       email: "",
       role: "student",
+      emailVerified: false,
+      uniandesVerified: false,
       favorites: [],
       interests: [],
       notificationsEnabled: true,

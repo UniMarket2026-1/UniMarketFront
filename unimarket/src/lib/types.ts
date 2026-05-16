@@ -23,8 +23,10 @@ export interface Product {
   imageUrl: string;
   sellerId: string;
   sellerName: string;
+  sellerEmail?: string;
   sellerRating: number;
   sellerVerified?: boolean;
+  sellerUniandesVerified?: boolean;
   active: boolean;
   meetingPoint?: string;
   createdAt: string;
@@ -42,6 +44,7 @@ export interface User {
   totalRating: number;
   ratingCount: number;
   emailVerified?: boolean;
+  uniandesVerified?: boolean;
   suspended?: boolean;
   suspensionReason?: string;
   warnings?: number;

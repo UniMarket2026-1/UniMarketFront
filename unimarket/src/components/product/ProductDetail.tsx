@@ -10,6 +10,7 @@ import {
   Info,
   Star,
   ShieldCheck,
+  BadgeCheck,
   ShieldAlert,
   MapPin,
   Flag,
@@ -206,6 +207,12 @@ export function ProductDetail({ product, sellerRatings, currentUserId }: Product
                     </span>
                   )}
                 </div>
+                {product.sellerUniandesVerified && (
+                  <div className="mt-1 inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full w-fit">
+                    <BadgeCheck size={12} aria-hidden="true" />
+                    {t.product.uniandesBadge}
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex flex-col items-end">
