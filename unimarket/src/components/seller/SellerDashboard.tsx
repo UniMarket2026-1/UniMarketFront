@@ -38,10 +38,12 @@ export function SellerDashboard({
   onNewProduct,
 }: SellerDashboardProps) {
   const { t } = useLang();
-  const [activeTab, setActiveTab] = useState<"listings" | "history">("listings");
+  const [activeTab, setActiveTab] = useState<"listings" | "requests" | "history">("listings");
 
   const totalRevenue = sales.reduce((acc, sale) => acc + sale.price, 0);
   const activeCount = myProducts.filter((p) => p.active).length;
+  const pendingRequests = requests.filter((r) => r.status === "pending");
+  const approvedRequests = requests.filter((r) => r.status === "approved");
   const [codeByRequest, setCodeByRequest] = useState<Record<string, string>>({});
 
   return (
@@ -73,6 +75,23 @@ export function SellerDashboard({
         >
           <List size={16} aria-hidden="true" />
           {t.seller.listings}
+        </button>
+        <button
+          role="tab"
+          aria-selected={activeTab === "requests"}
+          onClick={() => setActiveTab("requests")}
+          className={cn(
+            "flex-1 px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 relative",
+            activeTab === "requests" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500"
+          )}
+        >
+          <Package size={16} aria-hidden="true" />
+          Solicitudes
+          {pendingRequests.length > 0 && (
+            <span className="ml-1 px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-bold">
+              {pendingRequests.length}
+            </span>
+          )}
         </button>
         <button
           role="tab"
@@ -198,71 +217,105 @@ export function SellerDashboard({
               </div>
             ))}
           </div>
-
-          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-4">
-            <h3 className="font-bold text-slate-800 flex items-center gap-2">
-              <Package size={18} className="text-slate-400" aria-hidden="true" />
-              Solicitudes de compra
-            </h3>
-            <div className="flex flex-col gap-3">
-              {requests.length === 0 ? (
-                <p className="text-sm text-slate-500">Todavía no tienes solicitudes de compra.</p>
-              ) : (
-                requests.map((request) => (
-                  <div key={request.id} className="border border-slate-200 rounded-2xl p-4 flex flex-col gap-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="font-bold text-slate-900 text-sm">{request.productName}</p>
-                        <p className="text-xs text-slate-500">Comprador: {request.buyerName}</p>
-                      </div>
-                      <span className={cn(
-                        "px-2 py-1 rounded-full text-[10px] font-bold uppercase",
-                        request.status === "approved" ? "bg-emerald-50 text-emerald-600" : request.status === "completed" ? "bg-indigo-50 text-indigo-600" : request.status === "rejected" ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-700"
-                      )}>{request.status}</span>
+        </div>
+      ) : activeTab === "requests" ? (
+        /* Purchase Requests Management */
+        <div className="flex flex-col gap-4">
+          {/* Pending Requests */}
+          {pendingRequests.length > 0 && (
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-rose-500 rounded-full" aria-hidden="true" />
+                <h3 className="font-bold text-slate-800">Solicitudes pendientes ({pendingRequests.length})</h3>
+              </div>
+              <div className="flex flex-col gap-3">
+                {pendingRequests.map((request) => (
+                  <div key={request.id} className="border-2 border-rose-200 rounded-2xl p-4 flex flex-col gap-3 bg-rose-50">
+                    <div>
+                      <p className="font-bold text-slate-900 text-sm">{request.productName}</p>
+                      <p className="text-xs text-slate-600">Comprador: {request.buyerName} ({request.buyerEmail})</p>
+                      <p className="text-xs text-slate-500 mt-1">Punto de encuentro: {request.meetingPoint}</p>
                     </div>
-
-                    {request.status === "pending" && (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => onApproveRequest(request.id)}
-                          className="flex-1 px-3 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs"
-                        >
-                          Aprobar
-                        </button>
-                        <button
-                          onClick={() => onRejectRequest(request.id)}
-                          className="flex-1 px-3 py-2 rounded-xl bg-rose-600 text-white font-bold text-xs"
-                        >
-                          Rechazar
-                        </button>
-                      </div>
-                    )}
-
-                    {request.status === "approved" && (
-                      <div className="flex flex-col gap-2">
-                        <input
-                          value={codeByRequest[request.id] || ""}
-                          onChange={(event) => setCodeByRequest((prev) => ({ ...prev, [request.id]: event.target.value }))}
-                          placeholder="Código de entrega"
-                          className="w-full px-4 py-3 rounded-xl border border-slate-200 text-center tracking-[0.3em] font-bold"
-                        />
-                        <button
-                          onClick={() => onConfirmRequestCode(request.id, codeByRequest[request.id] || "")}
-                          className="px-4 py-3 rounded-xl bg-indigo-600 text-white font-bold text-sm"
-                        >
-                          Confirmar código
-                        </button>
-                      </div>
-                    )}
-
-                    {request.status === "completed" && (
-                      <p className="text-sm text-emerald-700 font-medium">Compra completada.</p>
-                    )}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => onApproveRequest(request.id)}
+                        className="flex-1 px-4 py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-700 transition-all"
+                      >
+                        Aprobar
+                      </button>
+                      <button
+                        onClick={() => onRejectRequest(request.id)}
+                        className="flex-1 px-4 py-3 rounded-xl bg-rose-600 text-white font-bold text-sm hover:bg-rose-700 transition-all"
+                      >
+                        Rechazar
+                      </button>
+                    </div>
                   </div>
-                ))
-              )}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Approved Awaiting Code */}
+          {approvedRequests.length > 0 && (
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full" aria-hidden="true" />
+                <h3 className="font-bold text-slate-800">Pendiente confirmación de código ({approvedRequests.length})</h3>
+              </div>
+              <div className="flex flex-col gap-3">
+                {approvedRequests.map((request) => (
+                  <div key={request.id} className="border border-emerald-200 rounded-2xl p-4 flex flex-col gap-3 bg-emerald-50">
+                    <div>
+                      <p className="font-bold text-slate-900 text-sm">{request.productName}</p>
+                      <p className="text-xs text-slate-600">Comprador: {request.buyerName}</p>
+                      <p className="text-xs text-slate-500 mt-1">Comprador confirmado: {request.buyerConfirmed ? "✓ Sí" : "✗ No"}</p>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <input
+                        value={codeByRequest[request.id] || ""}
+                        onChange={(event) => setCodeByRequest((prev) => ({ ...prev, [request.id]: event.target.value }))}
+                        placeholder="Ingresa el código de entrega"
+                        className="w-full px-4 py-3 rounded-xl border border-emerald-300 text-center tracking-[0.3em] font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
+                      />
+                      <button
+                        onClick={() => onConfirmRequestCode(request.id, codeByRequest[request.id] || "")}
+                        className="px-4 py-3 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-all"
+                      >
+                        Confirmar código
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Completed */}
+          {requests.filter((r) => r.status === "completed").length > 0 && (
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-indigo-500 rounded-full" aria-hidden="true" />
+                <h3 className="font-bold text-slate-800">Completadas</h3>
+              </div>
+              <div className="flex flex-col gap-2">
+                {requests.filter((r) => r.status === "completed").map((request) => (
+                  <div key={request.id} className="bg-indigo-50 p-3 rounded-xl border border-indigo-200">
+                    <p className="text-sm font-bold text-slate-900">{request.productName}</p>
+                    <p className="text-xs text-slate-600">{request.buyerName}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {requests.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+              <Package size={48} className="opacity-20 mb-4" aria-hidden="true" />
+              <p className="font-bold">Ninguna solicitud de compra aún</p>
+              <p className="text-sm">Los compradores enviarán solicitudes para tus productos</p>
+            </div>
+          )}
         </div>
       ) : (
         /* Sales History — HU-08 */
