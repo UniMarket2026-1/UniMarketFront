@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -199,7 +200,10 @@ export function ProductDetail({ product, sellerRatings, currentUserId }: Product
             {t.product.sellerInfo}
           </h3>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <Link
+              href={`/user/${product.sellerId}`}
+              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+            >
               <div
                 className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-lg"
                 aria-hidden="true"
@@ -207,7 +211,7 @@ export function ProductDetail({ product, sellerRatings, currentUserId }: Product
                 {product.sellerName.charAt(0)}
               </div>
               <div className="flex flex-col">
-                <span className="font-bold text-slate-900">{product.sellerName}</span>
+                <span className="font-bold text-slate-900 hover:text-indigo-600 transition">{product.sellerName}</span>
                 <div className="flex items-center gap-1 text-amber-500">
                   <Star size={14} fill="currentColor" aria-hidden="true" />
                   <span className="text-sm font-bold text-slate-600">
@@ -226,7 +230,7 @@ export function ProductDetail({ product, sellerRatings, currentUserId }: Product
                   </div>
                 )}
               </div>
-            </div>
+            </Link>
             <div className="flex flex-col items-end">
               <span className="text-xs text-slate-400">{t.product.since}</span>
               <div

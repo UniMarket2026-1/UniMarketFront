@@ -98,6 +98,22 @@ class ApiClient {
   }
 
   // Product endpoints
+
+    async forgotPassword(email: string) {
+      return this.request('/auth/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+      });
+    }
+
+    async resetPassword(code: string, newPassword: string) {
+      return this.request('/auth/reset-password', {
+        method: 'POST',
+        body: JSON.stringify({ code, newPassword }),
+      });
+    }
+
+    // Product endpoints
   async getProducts(page = 1, limit = 20, category?: string, condition?: string) {
     let url = `/products?page=${page}&limit=${limit}`;
     if (category && category !== 'Todos') url += `&category=${category}`;
@@ -256,6 +272,12 @@ class ApiClient {
   }
 
   // Report endpoints
+
+    async findUserById(userId: string) {
+      return this.request(`/users/${userId}`);
+    }
+
+    // Report endpoints
   async createReport(itemId: string, itemType: 'product' | 'user', category: string, reason: string, description: string) {
     return this.request('/reports', {
       method: 'POST',

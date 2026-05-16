@@ -10,7 +10,7 @@ import {
   X,
   ShieldCheck,
 } from "lucide-react";
-import { PurchaseItem, PurchaseRequest } from "@/lib/types";
+import { PurchaseItem } from "@/lib/types";
 import { ImageWithFallback } from "@/components/shared/ImageWithFallback";
 import { motion, AnimatePresence } from "motion/react";
 import { useLang } from "@/i18n/LanguageContext";
@@ -73,8 +73,9 @@ export function PurchaseHistory() {
       const updated = await apiClient.confirmPurchaseCode(requestId, code);
       setPurchaseRequests((prev) => prev.map((request) => (request.id === requestId ? updated : request)));
       toast.success(updated.status === "completed" ? "Compra completada" : "Código confirmado");
-    } catch (error: any) {
-      toast.error(error?.message || "No se pudo confirmar el código");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "No se pudo confirmar el código";
+      toast.error(message);
     }
   };
 
