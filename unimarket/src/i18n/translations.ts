@@ -67,6 +67,7 @@ export const translations = {
     },
     product: {
       contactSeller: "Contactar Vendedor",
+      requestBuy: "Pedir compra",
       ownProduct: "Este producto es tuyo",
       sellerInfo: "Información del Vendedor",
       recentRatings: "Calificaciones Recientes",
@@ -212,6 +213,7 @@ export const translations = {
     },
     product: {
       contactSeller: "Contact Seller",
+      requestBuy: "Request purchase",
       ownProduct: "This is your product",
       sellerInfo: "Seller Information",
       recentRatings: "Recent Ratings",

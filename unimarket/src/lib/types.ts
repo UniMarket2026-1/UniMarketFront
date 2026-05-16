@@ -136,3 +136,34 @@ export interface PurchaseItem extends Product {
   rated: boolean;
   purchaseId: string;
 }
+
+export type PurchaseRequestStatus = "pending" | "approved" | "rejected" | "cancelled" | "completed";
+
+export interface PurchaseRequest {
+  id: string;
+  productId: string;
+  productName: string;
+  productPrice: number;
+  productImageUrl: string;
+  meetingPoint: string;
+  buyerId: string;
+  buyerName: string;
+  buyerEmail: string;
+  buyerVerified: boolean;
+  buyerUniandesVerified: boolean;
+  sellerId: string;
+  sellerName: string;
+  sellerEmail: string;
+  sellerVerified: boolean;
+  sellerUniandesVerified: boolean;
+  status: PurchaseRequestStatus;
+  buyerConfirmed: boolean;
+  sellerConfirmed: boolean;
+  approvedAt?: string;
+  buyerConfirmedAt?: string;
+  sellerConfirmedAt?: string;
+  completedAt?: string;
+  accessCodeExpiresAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}

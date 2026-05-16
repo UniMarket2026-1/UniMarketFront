@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   History,
   Star,
@@ -8,26 +8,43 @@ import {
   CheckCircle2,
   MessageSquare,
   X,
+  ShieldCheck,
 } from "lucide-react";
-import { PurchaseItem } from "@/lib/types";
+import { PurchaseItem, PurchaseRequest } from "@/lib/types";
 import { ImageWithFallback } from "@/components/shared/ImageWithFallback";
 import { motion, AnimatePresence } from "motion/react";
 import { useLang } from "@/i18n/LanguageContext";
 import { useApp } from "@/contexts/AppContext";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { apiClient } from "@/lib/api";
+import { toast } from "sonner";
 
 /**
  * Purchase history with seller rating and resell — HU-03, HU-04
  */
 export function PurchaseHistory() {
   const { t } = useLang();
-  const { purchaseHistory, handleRate, handleResell } = useApp();
+  const { purchaseHistory, handleRate, handleResell, user, purchaseRequests, setPurchaseRequests } = useApp();
   const router = useRouter();
 
   const [ratingItem, setRatingItem] = useState<PurchaseItem | null>(null);
   const [ratingValue, setRatingValue] = useState(0);
   const [comment, setComment] = useState("");
+  const [codeByRequest, setCodeByRequest] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const requests = await apiClient.getMyPurchaseRequests();
+        setPurchaseRequests(Array.isArray(requests) ? requests : requests?.data ?? []);
+      } catch {
+        // keep existing context state
+      }
+    };
+
+    load();
+  }, [setPurchaseRequests]);
 
   const handleRateSubmit = () => {
     if (ratingItem && ratingValue > 0) {
@@ -41,6 +58,24 @@ export function PurchaseHistory() {
   const handleResellClick = (item: PurchaseItem) => {
     handleResell(item);
     router.push("/publish");
+  };
+
+  const pendingRequests = purchaseRequests.filter((request) => request.buyerId === user.id);
+
+  const handleConfirmCode = async (requestId: string) => {
+    const code = codeByRequest[requestId]?.trim();
+    if (!code) {
+      toast.error("Ingresa el código compartido por el vendedor");
+      return;
+    }
+
+    try {
+      const updated = await apiClient.confirmPurchaseCode(requestId, code);
+      setPurchaseRequests((prev) => prev.map((request) => (request.id === requestId ? updated : request)));
+      toast.success(updated.status === "completed" ? "Compra completada" : "Código confirmado");
+    } catch (error: any) {
+      toast.error(error?.message || "No se pudo confirmar el código");
+    }
   };
 
   const ratingLabels: Record<number, string> = {
@@ -129,6 +164,69 @@ export function PurchaseHistory() {
             <History size={48} className="opacity-20 mb-4" aria-hidden="true" />
             <p className="font-bold">{t.purchases.empty}</p>
             <p className="text-sm text-center">{t.purchases.emptyDesc}</p>
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <h2 className="text-xl font-bold text-slate-900 px-1">Solicitudes de compra</h2>
+        {pendingRequests.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-slate-100 p-6 text-sm text-slate-500">
+            Aún no has enviado solicitudes de compra.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {pendingRequests.map((request) => (
+              <div key={request.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0">
+                    <ImageWithFallback src={request.productImageUrl} alt={request.productName} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="font-bold text-slate-900 text-sm">{request.productName}</h3>
+                      <span className={cn(
+                        "px-2 py-1 rounded-full text-[10px] font-bold uppercase",
+                        request.status === "approved" ? "bg-emerald-50 text-emerald-600" : request.status === "completed" ? "bg-indigo-50 text-indigo-600" : "bg-amber-50 text-amber-700"
+                      )}>{request.status}</span>
+                    </div>
+                    <p className="text-xs text-slate-500">Vendedor: {request.sellerName}</p>
+                    <p className="text-xs text-slate-500">Punto de encuentro: {request.meetingPoint || t.product.locationFallback}</p>
+                  </div>
+                </div>
+
+                {request.status === "pending" && (
+                  <p className="text-sm text-slate-600">La solicitud está esperando aprobación del vendedor.</p>
+                )}
+
+                {request.status === "approved" && (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-sm text-slate-600 flex items-center gap-2">
+                      <ShieldCheck size={16} className="text-emerald-600" />
+                      El vendedor aprobó la solicitud. Ahora ambos deben ingresar el código de entrega.
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        value={codeByRequest[request.id] || ""}
+                        onChange={(event) => setCodeByRequest((prev) => ({ ...prev, [request.id]: event.target.value }))}
+                        placeholder="Código de entrega"
+                        className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none text-center tracking-[0.3em] font-bold"
+                      />
+                      <button
+                        onClick={() => handleConfirmCode(request.id)}
+                        className="px-4 py-3 rounded-xl bg-indigo-600 text-white font-bold"
+                      >
+                        Confirmar
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {request.status === "completed" && (
+                  <p className="text-sm text-emerald-700 font-medium">Compra completada por ambas partes.</p>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </div>

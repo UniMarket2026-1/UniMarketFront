@@ -22,6 +22,8 @@ import { useLang } from "@/i18n/LanguageContext";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useStartChat } from "@/hooks/useChat";
 import { useApp } from "@/contexts/AppContext";
+import { apiClient } from "@/lib/api";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 interface ProductDetailProps {
@@ -47,6 +49,16 @@ export function ProductDetail({ product, sellerRatings, currentUserId }: Product
     const chatId = startChat(product);
     if (chatId) {
       router.push(`/chat?chatId=${chatId}`);
+    }
+  };
+
+  const handleRequestPurchase = async () => {
+    try {
+      await apiClient.createPurchaseRequest(product.id);
+      toast.success("Solicitud enviada al vendedor");
+      router.push("/purchases");
+    } catch (error: any) {
+      toast.error(error?.message || "No se pudo enviar la solicitud");
     }
   };
 
@@ -297,14 +309,24 @@ export function ProductDetail({ product, sellerRatings, currentUserId }: Product
       {/* Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-100 flex gap-4">
         {!isOwnProduct ? (
-          <button
-            onClick={handleContactSeller}
-            className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 text-white font-bold py-4 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
-            aria-label={t.product.contactSeller}
-          >
-            <MessageCircle size={20} aria-hidden="true" />
-            {t.product.contactSeller}
-          </button>
+          <div className="flex flex-1 gap-3">
+            <button
+              onClick={handleContactSeller}
+              className="flex-1 flex items-center justify-center gap-2 bg-slate-900 text-white font-bold py-4 rounded-2xl hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
+              aria-label={t.product.contactSeller}
+            >
+              <MessageCircle size={20} aria-hidden="true" />
+              {t.product.contactSeller}
+            </button>
+            <button
+              onClick={handleRequestPurchase}
+              className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 text-white font-bold py-4 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
+              aria-label={t.product.requestBuy}
+            >
+              <BadgeCheck size={20} aria-hidden="true" />
+              {t.product.requestBuy}
+            </button>
+          </div>
         ) : (
           <div className="flex-1 py-3 text-center text-slate-400 italic font-medium bg-slate-50 rounded-xl">
             {t.product.ownProduct}

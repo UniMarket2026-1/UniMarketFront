@@ -9,6 +9,7 @@ import {
   Chat,
   AppNotification,
   PurchaseItem,
+  PurchaseRequest,
   Message,
   Category,
 } from "@/lib/types";
@@ -46,6 +47,8 @@ interface AppContextType {
   setNotifications: React.Dispatch<React.SetStateAction<AppNotification[]>>;
   purchaseHistory: PurchaseItem[];
   setPurchaseHistory: React.Dispatch<React.SetStateAction<PurchaseItem[]>>;
+  purchaseRequests: PurchaseRequest[];
+  setPurchaseRequests: React.Dispatch<React.SetStateAction<PurchaseRequest[]>>;
   sales: Sale[];
 
   // Role toggle (student / admin)
@@ -127,6 +130,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<Record<string, Message[]>>({});
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [purchaseHistory, setPurchaseHistory] = useState<PurchaseItem[]>([]);
+  const [purchaseRequests, setPurchaseRequests] = useState<PurchaseRequest[]>([]);
   const [userRole, setUserRole] = useState<"student" | "admin">("student");
   const [pendingEdit, setPendingEdit] = useState<Partial<Product> | null>(null);
 
@@ -176,6 +180,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (token) {
         const currentUser = await apiClient.getCurrentUser();
         setUser(normalizeUser(currentUser));
+        try {
+          const requests = await apiClient.getMyPurchaseRequests();
+          setPurchaseRequests(Array.isArray(requests) ? requests : requests?.data ?? []);
+        } catch {
+          setPurchaseRequests([]);
+        }
       }
     } catch {
       // Fall back to the bundled demo data when the API is unavailable.
@@ -457,6 +467,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setNotifications,
     purchaseHistory,
     setPurchaseHistory,
+    purchaseRequests,
+    setPurchaseRequests,
     sales: [],
     userRole,
     setUserRole,

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { List, History, DollarSign, Package, CheckCircle2, XCircle, Edit3, TrendingUp, Calendar, Plus } from "lucide-react";
 import { Product, Sale } from "@/lib/types";
+import { PurchaseRequest } from "@/lib/types";
 import { ImageWithFallback } from "@/components/shared/ImageWithFallback";
 import { motion } from "motion/react";
 import { useLang } from "@/i18n/LanguageContext";
@@ -11,9 +12,13 @@ import { cn } from "@/lib/utils";
 interface SellerDashboardProps {
   myProducts: Product[];
   sales: Sale[];
+  requests: PurchaseRequest[];
   onEdit: (product: Product) => void;
   onDelete: (id: string) => void;
   onActivate: (id: string) => void;
+  onApproveRequest: (id: string) => void;
+  onRejectRequest: (id: string) => void;
+  onConfirmRequestCode: (id: string, code: string) => void;
   onNewProduct: () => void;
 }
 
@@ -23,9 +28,13 @@ interface SellerDashboardProps {
 export function SellerDashboard({
   myProducts,
   sales,
+  requests,
   onEdit,
   onDelete,
   onActivate,
+  onApproveRequest,
+  onRejectRequest,
+  onConfirmRequestCode,
   onNewProduct,
 }: SellerDashboardProps) {
   const { t } = useLang();
@@ -33,6 +42,7 @@ export function SellerDashboard({
 
   const totalRevenue = sales.reduce((acc, sale) => acc + sale.price, 0);
   const activeCount = myProducts.filter((p) => p.active).length;
+  const [codeByRequest, setCodeByRequest] = useState<Record<string, string>>({});
 
   return (
     <div className="flex flex-col gap-6 pb-24">
@@ -187,6 +197,71 @@ export function SellerDashboard({
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-4">
+            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+              <Package size={18} className="text-slate-400" aria-hidden="true" />
+              Solicitudes de compra
+            </h3>
+            <div className="flex flex-col gap-3">
+              {requests.length === 0 ? (
+                <p className="text-sm text-slate-500">Todavía no tienes solicitudes de compra.</p>
+              ) : (
+                requests.map((request) => (
+                  <div key={request.id} className="border border-slate-200 rounded-2xl p-4 flex flex-col gap-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-bold text-slate-900 text-sm">{request.productName}</p>
+                        <p className="text-xs text-slate-500">Comprador: {request.buyerName}</p>
+                      </div>
+                      <span className={cn(
+                        "px-2 py-1 rounded-full text-[10px] font-bold uppercase",
+                        request.status === "approved" ? "bg-emerald-50 text-emerald-600" : request.status === "completed" ? "bg-indigo-50 text-indigo-600" : request.status === "rejected" ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-700"
+                      )}>{request.status}</span>
+                    </div>
+
+                    {request.status === "pending" && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => onApproveRequest(request.id)}
+                          className="flex-1 px-3 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs"
+                        >
+                          Aprobar
+                        </button>
+                        <button
+                          onClick={() => onRejectRequest(request.id)}
+                          className="flex-1 px-3 py-2 rounded-xl bg-rose-600 text-white font-bold text-xs"
+                        >
+                          Rechazar
+                        </button>
+                      </div>
+                    )}
+
+                    {request.status === "approved" && (
+                      <div className="flex flex-col gap-2">
+                        <input
+                          value={codeByRequest[request.id] || ""}
+                          onChange={(event) => setCodeByRequest((prev) => ({ ...prev, [request.id]: event.target.value }))}
+                          placeholder="Código de entrega"
+                          className="w-full px-4 py-3 rounded-xl border border-slate-200 text-center tracking-[0.3em] font-bold"
+                        />
+                        <button
+                          onClick={() => onConfirmRequestCode(request.id, codeByRequest[request.id] || "")}
+                          className="px-4 py-3 rounded-xl bg-indigo-600 text-white font-bold text-sm"
+                        >
+                          Confirmar código
+                        </button>
+                      </div>
+                    )}
+
+                    {request.status === "completed" && (
+                      <p className="text-sm text-emerald-700 font-medium">Compra completada.</p>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       ) : (

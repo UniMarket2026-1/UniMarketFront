@@ -152,6 +152,36 @@ class ApiClient {
     });
   }
 
+  async createPurchaseRequest(productId: string) {
+    return this.request('/purchase-requests', {
+      method: 'POST',
+      body: JSON.stringify({ productId }),
+    });
+  }
+
+  async getMyPurchaseRequests() {
+    return this.request('/purchase-requests/my');
+  }
+
+  async approvePurchaseRequest(requestId: string) {
+    return this.request(`/purchase-requests/${requestId}/approve`, {
+      method: 'POST',
+    });
+  }
+
+  async rejectPurchaseRequest(requestId: string) {
+    return this.request(`/purchase-requests/${requestId}/reject`, {
+      method: 'POST',
+    });
+  }
+
+  async confirmPurchaseCode(requestId: string, code: string) {
+    return this.request(`/purchase-requests/${requestId}/confirm-code`, {
+      method: 'POST',
+      body: JSON.stringify({ code }),
+    });
+  }
+
   async getSellerProducts(sellerId: string) {
     return this.request(`/products/seller/${sellerId}`);
   }
