@@ -29,6 +29,8 @@ export interface Product {
   sellerUniandesVerified?: boolean;
   active: boolean;
   meetingPoint?: string;
+  latitude?: number;
+  longitude?: number;
   createdAt: string;
 }
 
