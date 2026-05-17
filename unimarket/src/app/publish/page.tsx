@@ -1,24 +1,11 @@
 ﻿"use client";
-import { useRouter } from "next/navigation";
-import { useApp } from "@/contexts/AppContext";
-import { useProducts } from "@/hooks/useProducts";
-import { PublishProduct } from "@/components/publish/PublishProduct";
+import { Suspense } from "react";
+import PublishContent from "./content";
 
 export default function PublishPage() {
-  const { pendingEdit } = useApp();
-  const { saveProduct } = useProducts();
-  const router = useRouter();
-
-  const handleSave = async (data: Parameters<typeof saveProduct>[0]) => {
-    await saveProduct(data);
-    router.push("/seller");
-  };
-
   return (
-    <PublishProduct
-      initialData={pendingEdit ?? undefined}
-      isEditing={!!pendingEdit?.id}
-      onSave={handleSave}
-    />
+    <Suspense fallback={<div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div></div>}>
+      <PublishContent />
+    </Suspense>
   );
 }

@@ -178,8 +178,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
       if (token) {
-        const currentUser = await apiClient.getCurrentUser();
-        setUser(normalizeUser(currentUser));
+        try {
+          const currentUser = await apiClient.getCurrentUser();
+          setUser(normalizeUser(currentUser));
+        } catch {
+          // If API fails, try to restore user from localStorage
+          const savedUser = typeof window !== "undefined" ? localStorage.getItem("user_data") : null;
+          if (savedUser) {
+            try {
+              setUser(normalizeUser(JSON.parse(savedUser)));
+            } catch {
+              // Clear invalid data
+              localStorage.removeItem("user_data");
+              localStorage.removeItem("auth_token");
+            }
+          }
+        }
         try {
           const requests = await apiClient.getMyPurchaseRequests();
           setPurchaseRequests(Array.isArray(requests) ? requests : requests?.data ?? []);

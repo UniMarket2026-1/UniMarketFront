@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from "@react-google-maps/api";
-import { MarkerClusterer } from "@googlemaps/markerclusterer";
+import { MarkerClusterer, GridAlgorithm } from "@googlemaps/markerclusterer";
 import { Product } from "@/lib/types";
 import { ImageWithFallback } from "@/components/shared/ImageWithFallback";
 import Link from "next/link";
@@ -77,7 +77,7 @@ export function NearbyListings({ products }: NearbyListingsProps) {
       clustererRef.current = new MarkerClusterer({
         map,
         markers,
-        algorithm: new (window as any).google.maps.markerclusterer.SuperClusterAlgorithm(),
+        algorithm: new GridAlgorithm({ maxZoom: 15 }),
       });
     }
 

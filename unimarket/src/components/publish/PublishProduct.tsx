@@ -621,7 +621,7 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
                     autoComplete="off"
                   />
 
-                  {locationSuggestions.length > 0 && (
+                  {locationSuggestions.length > 0 && !mapCenter && (
                     <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
                       {locationSuggestions.map((suggestion) => (
                         <button

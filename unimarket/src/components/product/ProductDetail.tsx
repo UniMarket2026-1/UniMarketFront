@@ -332,8 +332,29 @@ export function ProductDetail({ product, sellerRatings, currentUserId }: Product
             </button>
           </div>
         ) : (
-          <div className="flex-1 py-3 text-center text-slate-400 italic font-medium bg-slate-50 rounded-xl">
-            {t.product.ownProduct}
+          <div className="flex flex-1 gap-3">
+            <button
+              onClick={() => router.push(`/publish?edit=${product.id}`)}
+              className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 text-white font-bold py-4 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
+            >
+              Editar
+            </button>
+            <button
+              onClick={async () => {
+                if (confirm("¿Estás seguro de que deseas eliminar este producto?")) {
+                  try {
+                    await apiClient.deleteProduct(product.id);
+                    toast.success("Producto eliminado");
+                    router.push("/");
+                  } catch (error: any) {
+                    toast.error(error?.message || "No se pudo eliminar el producto");
+                  }
+                }
+              }}
+              className="flex-1 flex items-center justify-center gap-2 bg-rose-600 text-white font-bold py-4 rounded-2xl hover:bg-rose-700 transition-all shadow-lg shadow-rose-200"
+            >
+              Eliminar
+            </button>
           </div>
         )}
       </div>

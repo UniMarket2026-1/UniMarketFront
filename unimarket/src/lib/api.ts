@@ -69,7 +69,12 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
-    this.setToken(response.token);
+    if (response.token) {
+      this.setToken(response.token);
+      if (typeof window !== 'undefined' && response.user) {
+        localStorage.setItem('user_data', JSON.stringify(response.user));
+      }
+    }
     return response;
   }
 
