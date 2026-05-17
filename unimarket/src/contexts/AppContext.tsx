@@ -94,7 +94,7 @@ interface AppContextType {
   ) => void;
 
   // Actions – HU-06 Chat
-  handleStartChat: (product: Product) => string | null; // returns chatId
+  handleStartChat: (product: Product) => Promise<string | null>; // returns chatId
 
   // Actions – Notifications
   handleMarkAllRead: () => void;
@@ -178,15 +178,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
       if (token) {
+        let resolvedUserId = user.id;
         try {
           const currentUser = await apiClient.getCurrentUser();
-          setUser(normalizeUser(currentUser));
+          const normalizedCurrentUser = normalizeUser(currentUser);
+          resolvedUserId = normalizedCurrentUser.id;
+          setUser(normalizedCurrentUser);
         } catch {
           // If API fails, try to restore user from localStorage
           const savedUser = typeof window !== "undefined" ? localStorage.getItem("user_data") : null;
           if (savedUser) {
             try {
-              setUser(normalizeUser(JSON.parse(savedUser)));
+              const normalizedSavedUser = normalizeUser(JSON.parse(savedUser));
+              resolvedUserId = normalizedSavedUser.id;
+              setUser(normalizedSavedUser);
             } catch {
               // Clear invalid data
               localStorage.removeItem("user_data");
@@ -200,11 +205,35 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         } catch {
           setPurchaseRequests([]);
         }
+
+        try {
+          const remoteChats = await apiClient.getUserChats(resolvedUserId);
+          const normalizedChats = Array.isArray(remoteChats) ? remoteChats : remoteChats?.data ?? [];
+          setChats(normalizedChats);
+
+          const messagesByChat: Record<string, Message[]> = {};
+          await Promise.all(
+            normalizedChats.map(async (chat) => {
+              try {
+                const chatMessages = await apiClient.getChatMessages(chat.id);
+                messagesByChat[chat.id] = Array.isArray(chatMessages)
+                  ? chatMessages
+                  : chatMessages?.data ?? [];
+              } catch {
+                messagesByChat[chat.id] = [];
+              }
+            })
+          );
+          setMessages(messagesByChat);
+        } catch {
+          setChats([]);
+          setMessages({});
+        }
       }
     } catch {
       // Fall back to the bundled demo data when the API is unavailable.
     }
-  }, [normalizeUser]);
+  }, [normalizeUser, user.id]);
 
   useEffect(() => {
     loadRemoteState();
@@ -426,11 +455,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // ── HU-06: Chat ───────────────────────────────────────────────────────────
   const handleStartChat = useCallback(
-    (product: Product): string | null => {
+    async (product: Product): Promise<string | null> => {
       const existing = chats.find(
         (c) => c.productId === product.id || c.sellerId === product.sellerId
       );
       if (existing) return existing.id;
+
+      const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+      if (token && user.id) {
+        try {
+          const remoteChat = await apiClient.createOrGetChat(product.id, user.id, product.sellerId);
+          const normalizedChat: Chat = {
+            ...remoteChat,
+            otherPartyName: product.sellerName,
+            productName: product.name,
+            lastMessage: remoteChat.lastMessage ?? "",
+          };
+          setChats((prev) => {
+            const withoutDuplicate = prev.filter((chat) => chat.id !== normalizedChat.id);
+            return [normalizedChat, ...withoutDuplicate];
+          });
+          return normalizedChat.id;
+        } catch {
+          // fall back to local chat creation below
+        }
+      }
 
       const newChat: Chat = {
         id: `c${Date.now()}`,
