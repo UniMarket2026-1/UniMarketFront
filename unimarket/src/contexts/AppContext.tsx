@@ -208,12 +208,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
         try {
           const remoteChats = await apiClient.getUserChats(resolvedUserId);
-          const normalizedChats = Array.isArray(remoteChats) ? remoteChats : remoteChats?.data ?? [];
+          const normalizedChats: Chat[] = Array.isArray(remoteChats)
+            ? remoteChats
+            : (remoteChats?.data ?? []);
           setChats(normalizedChats);
 
           const messagesByChat: Record<string, Message[]> = {};
           await Promise.all(
-            normalizedChats.map(async (chat) => {
+            normalizedChats.map(async (chat: Chat) => {
               try {
                 const chatMessages = await apiClient.getChatMessages(chat.id);
                 messagesByChat[chat.id] = Array.isArray(chatMessages)
