@@ -46,8 +46,8 @@ export function ProductDetail({ product, sellerRatings, currentUserId }: Product
   const isOwnProduct = product.sellerId === currentUserId;
   const favored = isFavorite(product.id);
 
-  const handleContactSeller = () => {
-    const chatId = startChat(product);
+  const handleContactSeller = async () => {
+    const chatId = await startChat(product);
     if (chatId) {
       router.push(`/chat?chatId=${chatId}`);
     }

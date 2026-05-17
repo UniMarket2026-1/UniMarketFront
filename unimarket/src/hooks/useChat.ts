@@ -89,8 +89,8 @@ export function useStartChat() {
   const { handleStartChat } = useApp();
 
   const startChat = useCallback(
-    (product: import("@/lib/types").Product): string | null => {
-      const chatId = handleStartChat(product);
+    async (product: import("@/lib/types").Product): Promise<string | null> => {
+      const chatId = await handleStartChat(product);
       return chatId;
     },
     [handleStartChat]

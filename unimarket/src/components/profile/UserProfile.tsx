@@ -46,12 +46,12 @@ export function UserProfile({ userId, products }: UserProfileProps) {
     loadUserData();
   }, [userId]);
 
-  const handleContactSeller = () => {
+  const handleContactSeller = async () => {
     if (currentUser.id === userId) {
       toast.error("No puedes iniciar chat contigo mismo");
       return;
     }
-    const chatId = startChat(products[0]);
+    const chatId = await startChat(products[0]);
     if (chatId) {
       router.push(`/chat?chatId=${chatId}`);
     }
