@@ -100,6 +100,11 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
 
   // Keep formData in sync if initialData changes (e.g. opening edit via URL)
   useEffect(() => {
+    // Only populate the form when editing an existing product. Avoid wiping
+    // user input when creating a new listing and parent state (products, user)
+    // updates (which previously caused the input flicker).
+    if (!initialData) return;
+
     setFormData({
       name: initialData.name ?? "",
       price: initialData.price ?? 0,
