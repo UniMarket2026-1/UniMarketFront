@@ -98,6 +98,27 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
       : null
   );
 
+  // Keep formData in sync if initialData changes (e.g. opening edit via URL)
+  useEffect(() => {
+    setFormData({
+      name: initialData.name ?? "",
+      price: initialData.price ?? 0,
+      description: initialData.description ?? "",
+      category: (initialData.category ?? "Otros") as Category,
+      condition: (initialData.condition ?? "Poco usado") as ProductCondition,
+      conditionDetail: initialData.conditionDetail ?? "",
+      imageUrl: initialData.imageUrl ?? "",
+      meetingPoint: initialData.meetingPoint ?? "",
+      latitude: (initialData as any).latitude ?? null,
+      longitude: (initialData as any).longitude ?? null,
+    });
+    setMapCenter(
+      (initialData as any).latitude && (initialData as any).longitude
+        ? { lat: Number((initialData as any).latitude), lng: Number((initialData as any).longitude) }
+        : null
+    );
+  }, [initialData]);
+
   useEffect(() => {
     if (!mapsLoaded) return;
 
@@ -281,13 +302,17 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
         formData.category,
         formData.condition,
       );
+      // Avoid overwriting good user-provided values with generic AI fallbacks
+      const isGenericName = (suggestion.name || "").toLowerCase().trim() === "producto";
+      const isGenericDesc = (suggestion.description || "").toLowerCase().includes("producto en buenas condiciones") || (suggestion.description || "").toLowerCase().includes("producto en buenas condiciones disponible");
+
       setFormData((prev) => ({
         ...prev,
-        name: suggestion.name,
-        description: suggestion.description,
-        category: suggestion.category,
-        condition: suggestion.condition,
-        conditionDetail: suggestion.conditionDetail,
+        name: prev.name && !isGenericName ? prev.name : (isGenericName ? prev.name : suggestion.name),
+        description: prev.description && !isGenericDesc ? prev.description : (isGenericDesc ? prev.description : suggestion.description),
+        category: suggestion.category || prev.category,
+        condition: suggestion.condition || prev.condition,
+        conditionDetail: suggestion.conditionDetail || prev.conditionDetail,
       }));
       toast.success(t.ai.filled);
     } catch {

@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { Product } from "@/lib/types";
 
 export default function PublishContent() {
-  const { pendingEdit, products } = useApp();
+  const { pendingEdit, products, setPendingEdit } = useApp();
   const { saveProduct } = useProducts();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -18,6 +18,7 @@ export default function PublishContent() {
     if (editId) {
       const product = products.find(p => p.id === editId);
       setInitialData(product);
+      setPendingEdit(product ?? null);
     } else if (pendingEdit) {
       setInitialData(pendingEdit);
     }

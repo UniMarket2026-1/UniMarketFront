@@ -8,10 +8,10 @@ export default function MarketplacePage() {
   return (
     <div className="space-y-8 pb-24">
       <section className="px-4 md:px-6">
-        <NearbyListings products={products} />
+        <Marketplace products={products} currentUserId={user.id} />
       </section>
       <section className="px-4 md:px-6">
-        <Marketplace products={products} currentUserId={user.id} />
+        <NearbyListings products={products} />
       </section>
     </div>
   );

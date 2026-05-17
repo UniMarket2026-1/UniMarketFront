@@ -123,16 +123,16 @@ export default function LoginPage() {
           </p>
           <div className="grid sm:grid-cols-3 gap-3 pt-4">
             <div className="rounded-2xl bg-white/8 border border-white/10 p-4 backdrop-blur">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Auth</p>
-              <p className="mt-2 font-semibold">JWT + backend real</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Comunidad</p>
+              <p className="mt-2 font-semibold">Verificación institucional para confianza</p>
             </div>
             <div className="rounded-2xl bg-white/8 border border-white/10 p-4 backdrop-blur">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Uploads</p>
-              <p className="mt-2 font-semibold">Fotos desde el dispositivo</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Sin costos</p>
+              <p className="mt-2 font-semibold">Sin suscripciones — uso comunitario gratuito</p>
             </div>
             <div className="rounded-2xl bg-white/8 border border-white/10 p-4 backdrop-blur">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">AI</p>
-              <p className="mt-2 font-semibold">Autofill por imagen</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Confianza</p>
+              <p className="mt-2 font-semibold">Historial de vendedores y compradores</p>
             </div>
           </div>
         </div>

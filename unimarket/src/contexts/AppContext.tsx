@@ -301,19 +301,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ── HU-07/10: Save (create or update) product ─────────────────────────────
   const handleSaveProduct = useCallback(
     async (data: Partial<Product>) => {
-      if (pendingEdit?.id) {
+      const editId = data.id ?? pendingEdit?.id;
+      if (editId) {
         if (typeof window !== "undefined" && localStorage.getItem("auth_token")) {
           try {
-            const updated = await apiClient.updateProduct(pendingEdit.id, data);
-            setProducts((prev) => prev.map((p) => (p.id === pendingEdit.id ? updated : p)));
+            const updated = await apiClient.updateProduct(editId as string, data);
+            setProducts((prev) => prev.map((p) => (p.id === (editId as string) ? updated : p)));
           } catch {
             setProducts((prev) =>
-              prev.map((p) => (p.id === pendingEdit.id ? ({ ...p, ...data } as Product) : p))
+              prev.map((p) => (p.id === (editId as string) ? ({ ...p, ...data } as Product) : p))
             );
           }
         } else {
           setProducts((prev) =>
-            prev.map((p) => (p.id === pendingEdit.id ? ({ ...p, ...data } as Product) : p))
+            prev.map((p) => (p.id === (editId as string) ? ({ ...p, ...data } as Product) : p))
           );
         }
       } else {

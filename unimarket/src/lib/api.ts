@@ -135,6 +135,7 @@ class ApiClient {
   }
 
   async createProduct(data: any) {
+    if (typeof window !== 'undefined') console.debug('API createProduct payload:', data);
     return this.request('/products', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -142,6 +143,7 @@ class ApiClient {
   }
 
   async updateProduct(id: string, data: any) {
+    if (typeof window !== 'undefined') console.debug('API updateProduct id:', id, 'payload:', data);
     return this.request(`/products/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
