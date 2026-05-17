@@ -155,6 +155,58 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
     return () => window.clearTimeout(timeout);
   }, [mapsLoaded, formData.meetingPoint]);
 
+  // Debugging: log overlay / modal state to help diagnose input-blocking issues
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const report = {
+        showImagePicker,
+        isUploading,
+        mapsLoaded,
+        mapCenterExists: !!mapCenter,
+        locationSuggestions: locationSuggestions.length,
+      };
+      // Log to console so dev can inspect what's active when the page is unresponsive
+      // eslint-disable-next-line no-console
+      console.debug("PublishProduct state:", report);
+
+      // Detect any full-screen fixed elements that might be intercepting pointer events
+      const blockingEls = Array.from(document.querySelectorAll("*"))
+        .filter((el) => {
+          const style = window.getComputedStyle(el as Element);
+          return (
+            style.position === "fixed" &&
+            style.pointerEvents !== "none" &&
+            (style.zIndex === "" || Number(style.zIndex) >= 20) &&
+            (el as HTMLElement).offsetWidth >= window.innerWidth &&
+            (el as HTMLElement).offsetHeight >= window.innerHeight
+          );
+        });
+
+      if (blockingEls.length > 0) {
+        const blocking = blockingEls.map((el) => ({ tag: el.tagName, class: (el as HTMLElement).className, z: window.getComputedStyle(el as Element).zIndex }));
+        // eslint-disable-next-line no-console
+        console.warn("Potential blocking full-screen elements:", blocking);
+
+        // In development only: temporarily make them non-interactive so the form is usable
+        if (process.env.NODE_ENV !== "production") {
+          blockingEls.forEach((el) => {
+            try {
+              (el as HTMLElement).style.pointerEvents = "none";
+              (el as HTMLElement).dataset.__blocked_for_debug = "true";
+            } catch {
+              // ignore
+            }
+          });
+          // eslint-disable-next-line no-console
+          console.info("Disabled pointer events on blocking full-screen elements for debugging.");
+        }
+      }
+    } catch (err) {
+      // ignore
+    }
+  }, [showImagePicker, isUploading, mapsLoaded, mapCenter, locationSuggestions]);
+
   // Completion progress — HU-10
   useEffect(() => {
     const fields = [
