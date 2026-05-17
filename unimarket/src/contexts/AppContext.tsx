@@ -158,7 +158,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       totalRating: apiUser.totalRating ?? 0,
       ratingCount: apiUser.ratingCount ?? 0,
       uniandesVerified:
-        apiUser.uniandesVerified ?? (apiUser.email ? apiUser.email.toLowerCase().endsWith("@uniandes.edu.co") : false),
+        apiUser.uniandesVerified ?? (apiUser.emailVerified && apiUser.email ? apiUser.email.toLowerCase().endsWith("@uniandes.edu.co") : false),
     }),
     []
   );

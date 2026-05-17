@@ -19,6 +19,8 @@ const containerStyle = {
   borderRadius: "0.5rem",
 };
 
+const MAP_LIBRARIES: ("places")[] = ["places"];
+
 // Default to Bogotá, Colombia as the center (Universidad de los Andes approximate location)
 const defaultCenter = {
   lat: 4.602,
@@ -29,6 +31,7 @@ export function NearbyListings({ products }: NearbyListingsProps) {
   const { t } = useLang();
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
+    libraries: MAP_LIBRARIES,
   });
 
   const [map, setMap] = useState<google.maps.Map | null>(null);

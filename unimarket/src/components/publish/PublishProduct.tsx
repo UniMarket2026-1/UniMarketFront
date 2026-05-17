@@ -18,6 +18,7 @@ import {
 import { Product, Category, ProductCondition } from "@/lib/types";
 import { ImageWithFallback } from "@/components/shared/ImageWithFallback";
 import { motion, AnimatePresence } from "motion/react";
+import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
 import { useLang } from "@/i18n/LanguageContext";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -44,6 +45,13 @@ const DEMO_IMAGES = [
   "https://images.unsplash.com/photo-1491553895911-0055eca6402d?auto=format&fit=crop&q=80&w=1080",
 ];
 
+const MAP_LIBRARIES: ("places")[] = ["places"];
+
+type LocationSuggestion = {
+  placeId: string;
+  description: string;
+};
+
 /**
  * Product publish/edit form — HU-04, HU-07, HU-10
  * Includes AI auto-fill feature (stubbed, ready for real implementation)
@@ -61,6 +69,8 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
     conditionDetail: initialData.conditionDetail ?? "",
     imageUrl: initialData.imageUrl ?? "",
     meetingPoint: initialData.meetingPoint ?? "",
+    latitude: (initialData as any).latitude ?? null,
+    longitude: (initialData as any).longitude ?? null,
   });
 
   const [quickMode, setQuickMode] = useState(false);
@@ -74,6 +84,55 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
 
   const categories: Category[] = PRODUCT_CATEGORIES;
   const conditions: ProductCondition[] = PRODUCT_CONDITIONS;
+
+  // Google Maps
+  const { isLoaded: mapsLoaded } = useJsApiLoader({ googleMapsApiKey: GOOGLE_MAPS_API_KEY, libraries: MAP_LIBRARIES });
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const autocompleteServiceRef = useRef<google.maps.places.AutocompleteService | null>(null);
+  const geocoderRef = useRef<google.maps.Geocoder | null>(null);
+  const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([]);
+  const [isSearchingLocations, setIsSearchingLocations] = useState(false);
+  const [mapCenter, setMapCenter] = useState<google.maps.LatLngLiteral | null>(
+    formData.latitude && formData.longitude
+      ? { lat: Number(formData.latitude), lng: Number(formData.longitude) }
+      : null
+  );
+
+  useEffect(() => {
+    if (!mapsLoaded) return;
+
+    const query = formData.meetingPoint.trim();
+    if (query.length < 3) {
+      setLocationSuggestions([]);
+      setIsSearchingLocations(false);
+      return;
+    }
+
+    setIsSearchingLocations(true);
+    const timeout = window.setTimeout(() => {
+      if (!autocompleteServiceRef.current) {
+        autocompleteServiceRef.current = new google.maps.places.AutocompleteService();
+      }
+
+      autocompleteServiceRef.current.getPlacePredictions(
+        {
+          input: query,
+          componentRestrictions: { country: "co" },
+        },
+        (predictions) => {
+          setLocationSuggestions(
+            (predictions ?? []).map((prediction) => ({
+              placeId: prediction.place_id,
+              description: prediction.description,
+            }))
+          );
+          setIsSearchingLocations(false);
+        }
+      );
+    }, 250);
+
+    return () => window.clearTimeout(timeout);
+  }, [mapsLoaded, formData.meetingPoint]);
 
   // Completion progress — HU-10
   useEffect(() => {
@@ -93,6 +152,59 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
     formData.imageUrl &&
     formData.conditionDetail.length >= 20 &&
     formData.meetingPoint.trim().length >= 5;
+
+  const handlePlaceChanged = () => {
+    return;
+  };
+
+  const selectLocationSuggestion = (suggestion: LocationSuggestion) => {
+    setFormData((prev) => ({ ...prev, meetingPoint: suggestion.description }));
+    setLocationSuggestions([]);
+
+    if (!mapsLoaded) return;
+
+    if (!geocoderRef.current) {
+      geocoderRef.current = new google.maps.Geocoder();
+    }
+
+    geocoderRef.current.geocode({ placeId: suggestion.placeId }, (results, status) => {
+      if (status !== "OK" || !results?.[0]?.geometry?.location) return;
+
+      const location = results[0].geometry.location;
+      const lat = location.lat();
+      const lng = location.lng();
+      const formatted = results[0].formatted_address || suggestion.description;
+
+      setFormData((prev) => ({
+        ...prev,
+        meetingPoint: formatted,
+        latitude: lat,
+        longitude: lng,
+      }));
+      setMapCenter({ lat, lng });
+    });
+  };
+
+  const onMarkerDragEnd = async (e: google.maps.MapMouseEvent) => {
+    if (!e.latLng) return;
+    const lat = e.latLng.lat();
+    const lng = e.latLng.lng();
+    setFormData((prev) => ({ ...prev, latitude: lat, longitude: lng }));
+    setMapCenter({ lat, lng });
+
+    // reverse geocode to update human readable address
+    try {
+      const geocoder = geocoderRef.current ?? new google.maps.Geocoder();
+      geocoderRef.current = geocoder;
+      geocoder.geocode({ location: { lat, lng } }, (results: any, status: any) => {
+        if (status === "OK" && results && results[0]) {
+          setFormData((prev) => ({ ...prev, meetingPoint: results[0].formatted_address }));
+        }
+      });
+    } catch (err) {
+      // ignore
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -486,34 +598,105 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
             <label htmlFor="meeting-point" className="text-sm font-bold text-slate-800">
               Punto de encuentro *
             </label>
-            <input
-              id="meeting-point"
-              type="text"
-              placeholder="Ej: Biblioteca General, entrada principal"
-              className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-              value={formData.meetingPoint}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, meetingPoint: e.target.value }))
-              }
-              required
-              minLength={5}
-            />
-            <p className="text-xs text-slate-500">
-              El comprador verá este punto para acordar la entrega.
-            </p>
+            {mapsLoaded ? (
+              <>
+                <div className="relative">
+                  <input
+                    id="meeting-point"
+                    type="text"
+                    placeholder="Ej: Biblioteca General, entrada principal"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                    value={formData.meetingPoint}
+                    onChange={(e) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        meetingPoint: e.target.value,
+                        latitude: null,
+                        longitude: null,
+                      }));
+                      setMapCenter(null);
+                    }}
+                    required
+                    minLength={5}
+                    autoComplete="off"
+                  />
 
-            {formData.meetingPoint.trim().length >= 5 && (
-              <div className="overflow-hidden rounded-xl border border-slate-200 h-56">
-                <iframe
-                  title="Mapa del punto de encuentro"
-                  className="w-full h-full"
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  src={`https://www.google.com/maps/embed/v1/place?key=${GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(
-                    formData.meetingPoint
-                  )}`}
+                  {locationSuggestions.length > 0 && (
+                    <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-30 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+                      {locationSuggestions.map((suggestion) => (
+                        <button
+                          key={suggestion.placeId}
+                          type="button"
+                          onClick={() => selectLocationSuggestion(suggestion)}
+                          className="w-full px-4 py-3 text-left hover:bg-indigo-50 transition-colors border-b border-slate-100 last:border-b-0"
+                        >
+                          <div className="text-sm font-semibold text-slate-800">{suggestion.description}</div>
+                          <div className="text-xs text-slate-500">Seleccionar esta ubicación</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {isSearchingLocations && (
+                    <div className="absolute right-3 top-3 text-xs font-semibold text-slate-400">Buscando...</div>
+                  )}
+                </div>
+
+                <p className="text-xs text-slate-500">
+                  El comprador verá este punto para acordar la entrega. Puedes elegir una sugerencia o mover el pin en el mapa.
+                </p>
+
+                {(mapCenter || (formData.latitude && formData.longitude)) && (
+                  <div className="overflow-hidden rounded-xl border border-slate-200 h-56">
+                    <GoogleMap
+                      mapContainerStyle={{ width: "100%", height: "100%" }}
+                      center={
+                        mapCenter ?? { lat: Number(formData.latitude), lng: Number(formData.longitude) }
+                      }
+                      zoom={16}
+                      onLoad={(map) => {
+                        mapRef.current = map;
+                      }}
+                    >
+                      <Marker
+                        position={mapCenter ?? { lat: Number(formData.latitude), lng: Number(formData.longitude) }}
+                        draggable={true}
+                        onDragEnd={onMarkerDragEnd}
+                      />
+                    </GoogleMap>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <input
+                  id="meeting-point"
+                  type="text"
+                  placeholder="Ej: Biblioteca General, entrada principal"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                  value={formData.meetingPoint}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, meetingPoint: e.target.value }))
+                  }
+                  required
+                  minLength={5}
                 />
-              </div>
+                <p className="text-xs text-slate-500">El comprador verá este punto para acordar la entrega.</p>
+
+                {formData.meetingPoint.trim().length >= 5 && (
+                  <div className="overflow-hidden rounded-xl border border-slate-200 h-56">
+                    <iframe
+                      title="Mapa del punto de encuentro"
+                      className="w-full h-full"
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      src={`https://www.google.com/maps/embed/v1/place?key=${GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(
+                        formData.meetingPoint
+                      )}`}
+                    />
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

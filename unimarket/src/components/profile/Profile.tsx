@@ -70,7 +70,7 @@ export function Profile() {
     label: id,
   }));
 
-  const isUniandes = (user.email ?? "").toLowerCase().endsWith("@uniandes.edu.co");
+  const isUniandes = !!user.uniandesVerified;
 
   const handleToggleInterest = (cat: Category) => {
     if (user.interests.includes(cat)) {
@@ -142,7 +142,7 @@ export function Profile() {
         ...updatedUser,
         emailVerified: updatedUser.emailVerified ?? true,
         uniandesVerified:
-          updatedUser.uniandesVerified ?? (updatedUser.email ? updatedUser.email.toLowerCase().endsWith("@uniandes.edu.co") : false),
+          updatedUser.uniandesVerified ?? (updatedUser.emailVerified && updatedUser.email ? updatedUser.email.toLowerCase().endsWith("@uniandes.edu.co") : false),
       }));
       setVerificationCode("");
       setVerificationMessage("Correo verificado correctamente");
