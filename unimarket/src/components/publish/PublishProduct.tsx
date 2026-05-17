@@ -56,21 +56,21 @@ type LocationSuggestion = {
  * Product publish/edit form — HU-04, HU-07, HU-10
  * Includes AI auto-fill feature (stubbed, ready for real implementation)
  */
-export function PublishProduct({ initialData = {}, isEditing = false, onSave }: PublishProductProps) {
+export function PublishProduct({ initialData, isEditing = false, onSave }: PublishProductProps) {
   const router = useRouter();
   const { t } = useLang();
 
   const [formData, setFormData] = useState({
-    name: initialData.name ?? "",
-    price: initialData.price ?? 0,
-    description: initialData.description ?? "",
-    category: (initialData.category ?? "Otros") as Category,
-    condition: (initialData.condition ?? "Poco usado") as ProductCondition,
-    conditionDetail: initialData.conditionDetail ?? "",
-    imageUrl: initialData.imageUrl ?? "",
-    meetingPoint: initialData.meetingPoint ?? "",
-    latitude: (initialData as any).latitude ?? null,
-    longitude: (initialData as any).longitude ?? null,
+    name: initialData?.name ?? "",
+    price: initialData?.price ?? 0,
+    description: initialData?.description ?? "",
+    category: (initialData?.category ?? "Otros") as Category,
+    condition: (initialData?.condition ?? "Poco usado") as ProductCondition,
+    conditionDetail: initialData?.conditionDetail ?? "",
+    imageUrl: initialData?.imageUrl ?? "",
+    meetingPoint: initialData?.meetingPoint ?? "",
+    latitude: (initialData as any)?.latitude ?? null,
+    longitude: (initialData as any)?.longitude ?? null,
   });
 
   const [quickMode, setQuickMode] = useState(false);
@@ -212,6 +212,12 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
     }
   }, [showImagePicker, isUploading, mapsLoaded, mapCenter, locationSuggestions]);
 
+  // Log form data changes to help find unexpected resets
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.debug("PublishProduct formData:", formData);
+  }, [formData]);
+
   // Completion progress — HU-10
   useEffect(() => {
     const fields = [
@@ -290,7 +296,7 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
       toast.error("Por favor completa todos los campos obligatorios");
       return;
     }
-    await onSave({ ...formData, ...(isEditing && initialData.id ? { id: initialData.id } : {}) });
+    await onSave({ ...formData, ...(isEditing && initialData?.id ? { id: initialData.id } : {}) });
     toast.success(isEditing ? "Producto actualizado correctamente" : "¡Producto publicado con éxito!");
     router.push("/seller");
   };
@@ -444,7 +450,7 @@ export function PublishProduct({ initialData = {}, isEditing = false, onSave }: 
             <h1 className="text-xl font-bold text-slate-900">
               {isEditing
                 ? "Editar Publicación"
-                : initialData.name
+                : initialData?.name
                 ? "Revender Producto"
                 : "Nueva Publicación"}
             </h1>
