@@ -109,18 +109,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-6rem)] grid lg:grid-cols-[1.15fr_0.85fr] gap-8 items-center">
-      <section className="relative overflow-hidden rounded-[2rem] bg-slate-950 text-white p-8 lg:p-12 shadow-2xl">
+    <div className="min-h-screen grid lg:grid-cols-[1.15fr_0.85fr] gap-8 items-center p-6">
+      <section className="relative overflow-hidden rounded-[2rem] bg-slate-950 text-white p-6 lg:p-8 shadow-2xl">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.35),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(15,23,42,0.9),transparent_50%)]" />
         <div className="relative space-y-6 w-full max-w-md">
           <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-indigo-100 backdrop-blur">
             <Lock size={16} /> Acceso seguro a UniMarket
           </div>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black leading-snug tracking-tight break-words max-w-xs sm:max-w-md">
-            Convierte lo que ya no usas en dinero en una comunidad universitaria confiable.
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold leading-snug tracking-tight whitespace-normal max-w-md">
+            Convierte lo que ya no usas en dinero dentro de tu comunidad universitaria.
           </h1>
-          <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-xs sm:max-w-md break-words">
-            Publica en minutos, negocia por chat y construye reputación real con reseñas verificadas dentro de UniMarket.
+          <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-md whitespace-normal">
+            Publica en minutos, negocia por chat y construye reputación con reseñas verificadas dentro de UniMarket.
           </p>
           <div className="grid gap-3 pt-4 sm:grid-cols-2">
             <div className="min-w-0 rounded-2xl bg-white/8 border border-white/10 p-4 backdrop-blur">
