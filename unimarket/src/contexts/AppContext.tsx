@@ -282,8 +282,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                       type: "message",
                       title: `Nuevo mensaje de ${chat.otherPartyName}`,
                       body: remoteMessages[remoteMessages.length - 1]?.text ?? "",
+                      timestamp: new Date().toISOString(),
                       read: false,
-                      createdAt: new Date().toISOString(),
                     },
                     ...prev,
                   ]);
@@ -307,12 +307,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               const prev = prevMap[r.id];
               if (!prev) {
                 setNotifications((prevN) => [
-                  { id: `n_req_${r.id}_${Date.now()}`, type: "purchase", title: "Nueva solicitud de compra", body: `${r.buyerName} solicitó ${r.productName}`, read: false, createdAt: new Date().toISOString() },
+                  {
+                    id: `n_req_${r.id}_${Date.now()}`,
+                    type: "sale",
+                    title: "Nueva solicitud de compra",
+                    body: `${r.buyerName} solicitó ${r.productName}`,
+                    timestamp: new Date().toISOString(),
+                    read: false,
+                    linkProductId: r.productId,
+                  },
                   ...prevN,
                 ]);
               } else if (prev.status !== r.status) {
                 setNotifications((prevN) => [
-                  { id: `n_req_change_${r.id}_${Date.now()}`, type: "purchase", title: "Cambio en solicitud", body: `${r.productName} cambió a ${r.status}`, read: false, createdAt: new Date().toISOString() },
+                  {
+                    id: `n_req_change_${r.id}_${Date.now()}`,
+                    type: "system",
+                    title: "Cambio en solicitud",
+                    body: `${r.productName} cambió a ${r.status}`,
+                    timestamp: new Date().toISOString(),
+                    read: false,
+                  },
                   ...prevN,
                 ]);
               }
