@@ -112,15 +112,14 @@ export default function LoginPage() {
     <div className="min-h-[calc(100vh-6rem)] grid lg:grid-cols-[1.15fr_0.85fr] gap-8 items-center">
       <section className="relative overflow-hidden rounded-[2rem] bg-slate-950 text-white p-8 lg:p-12 shadow-2xl">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.35),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(15,23,42,0.9),transparent_50%)]" />
-        <div className="absolute inset-0 opacity-20 bg-[linear-gradient(135deg,rgba(255,255,255,0.08)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.08)_50%,rgba(255,255,255,0.08)_75%,transparent_75%,transparent)] bg-[length:28px_28px]" />
         <div className="relative space-y-6 w-full">
           <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-indigo-100 backdrop-blur">
             <Lock size={16} /> Acceso seguro a UniMarket
           </div>
-          <h1 className="text-4xl lg:text-5xl font-black leading-tight tracking-tight">
+          <h1 className="text-4xl lg:text-5xl font-black leading-tight tracking-tight break-words">
             Convierte lo que ya no usas en dinero, en una comunidad universitaria confiable.
           </h1>
-          <p className="text-slate-300 text-lg leading-relaxed max-w-lg">
+          <p className="text-slate-300 text-lg leading-relaxed max-w-lg break-words">
             Publica en minutos, negocia por chat y construye reputación real con reseñas verificadas dentro de UniMarket.
           </p>
           <div className="grid gap-3 pt-4 sm:grid-cols-2">

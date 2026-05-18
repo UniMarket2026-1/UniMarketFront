@@ -81,16 +81,24 @@ export function NearbyListings({ products }: NearbyListingsProps) {
       });
     }
 
-    // Auto-fit bounds if products exist
+    // Auto-fit bounds if products exist. If there's only one marker, avoid extreme zoom
     if (productsWithCoords.length > 0) {
-      const bounds = new google.maps.LatLngBounds();
-      productsWithCoords.forEach((product) => {
-        bounds.extend({
-          lat: Number(product.latitude),
-          lng: Number(product.longitude),
+      if (productsWithCoords.length === 1) {
+        const single = productsWithCoords[0];
+        const center = { lat: Number(single.latitude), lng: Number(single.longitude) };
+        map.setCenter(center);
+        // medium zoom to avoid being too close
+        map.setZoom(14);
+      } else {
+        const bounds = new google.maps.LatLngBounds();
+        productsWithCoords.forEach((product) => {
+          bounds.extend({
+            lat: Number(product.latitude),
+            lng: Number(product.longitude),
+          });
         });
-      });
-      map.fitBounds(bounds);
+        map.fitBounds(bounds);
+      }
     }
   }, [map, isLoaded, productsWithCoords]);
 

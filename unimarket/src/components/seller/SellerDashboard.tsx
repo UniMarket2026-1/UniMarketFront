@@ -334,32 +334,50 @@ export function SellerDashboard({
                       <p className="text-xs text-slate-500 mt-1">Comprador confirmado: {request.buyerConfirmed ? "✓ Sí" : "✗ No"}</p>
                     </div>
                     <div className="flex flex-col gap-2">
-                      <input
-                        value={codeByRequest[request.id] || ""}
-                        onChange={(event) => setCodeByRequest((prev) => ({ ...prev, [request.id]: event.target.value }))}
-                        placeholder="Ingresa el código de entrega"
-                        className="w-full px-4 py-3 rounded-xl border border-emerald-300 text-center tracking-[0.3em] font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
-                      />
-                      <button
-                        onClick={async () => {
-                          if (confirmLoading[request.id]) return;
-                          setConfirmLoading((s) => ({ ...s, [request.id]: true }));
-                          try {
-                            await onConfirmRequestCode(request.id, codeByRequest[request.id] || "");
-                          } finally {
-                            setConfirmLoading((s) => ({ ...s, [request.id]: false }));
-                          }
-                        }}
-                        disabled={confirmLoading[request.id]}
-                        className={cn(
-                          "px-4 py-3 rounded-xl text-white font-bold text-sm transition-all",
-                          confirmLoading[request.id]
-                            ? "bg-indigo-400 cursor-not-allowed"
-                            : "bg-indigo-600 hover:bg-indigo-700"
-                        )}
-                      >
-                        {confirmLoading[request.id] ? "Confirmando..." : "Confirmar código"}
-                      </button>
+                      {/* Show explicit waiting state if buyer or seller already confirmed */}
+                      {request.buyerConfirmed && !request.sellerConfirmed && (
+                        <p className="text-sm text-amber-700 font-medium bg-amber-50 px-3 py-2 rounded-lg">
+                          ⏳ El comprador ya ingresó el código. Ingresa el código para completar la venta.
+                        </p>
+                      )}
+
+                      {request.sellerConfirmed && !request.buyerConfirmed ? (
+                        <div className="flex flex-col gap-2">
+                          <p className="text-sm text-amber-700 font-medium bg-amber-50 px-3 py-2 rounded-lg">
+                            ⏳ Has ingresado tu código. A la espera de que el comprador confirme.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-2">
+                          <input
+                            value={codeByRequest[request.id] || ""}
+                            onChange={(event) => setCodeByRequest((prev) => ({ ...prev, [request.id]: event.target.value }))}
+                            placeholder="Ingresa el código de entrega"
+                            className="w-full px-4 py-3 rounded-xl border border-emerald-300 text-center tracking-[0.3em] font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
+                            disabled={request.sellerConfirmed}
+                          />
+                          <button
+                            onClick={async () => {
+                              if (confirmLoading[request.id]) return;
+                              setConfirmLoading((s) => ({ ...s, [request.id]: true }));
+                              try {
+                                await onConfirmRequestCode(request.id, codeByRequest[request.id] || "");
+                              } finally {
+                                setConfirmLoading((s) => ({ ...s, [request.id]: false }));
+                              }
+                            }}
+                            disabled={confirmLoading[request.id] || request.sellerConfirmed}
+                            className={cn(
+                              "px-4 py-3 rounded-xl text-white font-bold text-sm transition-all",
+                              confirmLoading[request.id] || request.sellerConfirmed
+                                ? "bg-indigo-400 cursor-not-allowed"
+                                : "bg-indigo-600 hover:bg-indigo-700"
+                            )}
+                          >
+                            {confirmLoading[request.id] ? "Confirmando..." : "Confirmar código"}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
