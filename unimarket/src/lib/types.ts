@@ -24,6 +24,7 @@ export interface Product {
   sellerId: string;
   sellerName: string;
   sellerEmail?: string;
+  sellerProfileImageUrl?: string;
   sellerRating: number;
   sellerVerified?: boolean;
   sellerUniandesVerified?: boolean;

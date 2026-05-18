@@ -85,6 +85,8 @@ export function ProductDetail({ product, sellerRatings, currentUserId }: Product
           text: "text-slate-600",
         };
 
+  const sellerInitial = product.sellerName.trim().charAt(0).toUpperCase() || "U";
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -204,11 +206,16 @@ export function ProductDetail({ product, sellerRatings, currentUserId }: Product
               href={`/user/${product.sellerId}`}
               className="flex items-center gap-3 hover:opacity-80 transition-opacity"
             >
-              <div
-                className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-lg"
-                aria-hidden="true"
-              >
-                {product.sellerName.charAt(0)}
+              <div className="w-12 h-12 rounded-full bg-indigo-100 overflow-hidden flex items-center justify-center text-indigo-600 font-bold text-lg shrink-0" aria-hidden="true">
+                {product.sellerProfileImageUrl ? (
+                  <ImageWithFallback
+                    src={product.sellerProfileImageUrl}
+                    alt={product.sellerName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  sellerInitial
+                )}
               </div>
               <div className="flex flex-col">
                 <span className="font-bold text-slate-900 hover:text-indigo-600 transition">{product.sellerName}</span>

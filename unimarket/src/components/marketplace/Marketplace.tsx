@@ -307,6 +307,8 @@ function ProductCard({
       ? "bg-amber-500"
       : "bg-slate-500";
 
+  const sellerInitial = product.sellerName.trim().charAt(0).toUpperCase() || "U";
+
   return (
     <motion.article
       layout
@@ -403,12 +405,17 @@ function ProductCard({
         </div>
 
         <div className="pt-2 mt-auto border-t border-slate-100 flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <div
-              className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-600"
-              aria-hidden="true"
-            >
-              {product.sellerName.charAt(0)}
+          <div className="flex items-center gap-1.5 min-w-0">
+            <div className="w-6 h-6 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center text-[10px] font-bold text-slate-600 shrink-0" aria-hidden="true">
+              {product.sellerProfileImageUrl ? (
+                <ImageWithFallback
+                  src={product.sellerProfileImageUrl}
+                  alt={product.sellerName}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                sellerInitial
+              )}
             </div>
             <span className="text-xs text-slate-600 font-medium">{product.sellerName}</span>
           </div>
