@@ -96,12 +96,23 @@ export function UserProfile({ userId, products }: UserProfileProps) {
       <div className="mt-16 p-6 bg-gradient-to-br from-slate-50 to-slate-100 border-b border-slate-200">
         <div className="flex items-start justify-between gap-4 mb-6">
           <div className="flex items-center gap-4">
-            <div className="w-20 h-20 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-2xl">
-              {userData.name.charAt(0).toUpperCase()}
+            <div className="w-20 h-20 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-2xl overflow-hidden">
+              {userData.profileImageUrl ? (
+                <img
+                  src={userData.profileImageUrl}
+                  alt={userData.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                userData.name.charAt(0).toUpperCase()
+              )}
             </div>
             <div className="flex flex-col gap-1">
               <h1 className="text-2xl font-black text-slate-900">{userData.name}</h1>
               <p className="text-sm text-slate-600">{userData.email}</p>
+              {userData.description && (
+                <p className="text-sm text-slate-700 mt-1 max-w-xl">{userData.description}</p>
+              )}
               <div className="flex items-center gap-2 mt-2">
                 {userData.uniandesVerified && (
                   <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full">

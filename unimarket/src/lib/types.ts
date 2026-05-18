@@ -68,6 +68,7 @@ export interface Rating {
 
 export interface Sale {
   id: string;
+  sellerId: string;
   productId: string;
   productName: string;
   price: number;

@@ -50,6 +50,12 @@ export function ChatView() {
     router.replace("/chat"); // Remove chatId from URL
   };
 
+  const handleOpenUserProfile = () => {
+    if (!selectedChat) return;
+    const otherUserId = selectedChat.buyerId === user.id ? selectedChat.sellerId : selectedChat.buyerId;
+    router.push(`/user/${otherUserId}`);
+  };
+
   if (selectedChat) {
     return (
       <motion.div
@@ -82,9 +88,13 @@ export function ChatView() {
               )}
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-slate-900 leading-none">
+              <button
+                type="button"
+                onClick={handleOpenUserProfile}
+                className="font-bold text-slate-900 leading-none text-left hover:text-indigo-600 transition-colors"
+              >
                 {selectedChat.otherPartyName}
-              </span>
+              </button>
               <span
                 className="text-[10px] text-emerald-500 font-bold uppercase mt-1"
                 aria-label="Estado: En línea"

@@ -135,6 +135,7 @@ export const MOCK_PRODUCTS: Product[] = [
 export const MOCK_SALES: Sale[] = [
   {
     id: "s1",
+    sellerId: "u1",
     productId: "p10",
     productName: "Libro de Física I",
     price: 20000,
@@ -143,6 +144,7 @@ export const MOCK_SALES: Sale[] = [
   },
   {
     id: "s2",
+    sellerId: "u1",
     productId: "p11",
     productName: "Mouse Logitech",
     price: 12000,
@@ -151,6 +153,7 @@ export const MOCK_SALES: Sale[] = [
   },
   {
     id: "s3",
+    sellerId: "u1",
     productId: "p12",
     productName: "Escritorio Madera",
     price: 50000,

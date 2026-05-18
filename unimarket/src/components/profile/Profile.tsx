@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Bell,
   Heart,
@@ -58,6 +58,10 @@ export function Profile() {
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  useEffect(() => {
+    setEditDescription(user.description || "");
+  }, [user.description]);
 
   const iconByCategory: Record<Category, React.ReactNode> = {
     Libros: <BookOpen size={16} aria-hidden="true" />,
@@ -213,6 +217,16 @@ export function Profile() {
         ...prev,
         ...updatedUser,
       }));
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem(
+          "user_data",
+          JSON.stringify({
+            ...user,
+            ...updatedUser,
+          })
+        );
+      }
 
       setIsEditingProfile(false);
       setProfileImagePreview(null);

@@ -161,6 +161,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       notificationsEnabled: apiUser.notificationsEnabled ?? true,
       totalRating: apiUser.totalRating ?? 0,
       ratingCount: apiUser.ratingCount ?? 0,
+      description: apiUser.description ?? "",
+      profileImageUrl: apiUser.profileImageUrl ?? "",
       uniandesVerified:
         apiUser.uniandesVerified ?? (apiUser.emailVerified && apiUser.email ? apiUser.email.toLowerCase().endsWith("@uniandes.edu.co") : false),
     }),
@@ -660,40 +662,46 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     .filter((request) => request.status === "completed")
     .map((request) => ({
       id: request.id,
+      sellerId: request.sellerId,
       productId: request.productId,
       productName: request.productName,
       price: request.productPrice,
-      date: request.completedAt ? new Date(request.completedAt).toLocaleDateString() : new Date().toLocaleDateString(),
+      date: request.completedAt || request.updatedAt || request.createdAt,
       buyerName: request.buyerName,
     }));
 
   // Compute purchase history from completed purchase requests (for buyer)
   useEffect(() => {
-    const computedHistory: PurchaseItem[] = purchaseRequests
-      .filter((request) => request.status === "completed" && request.buyerId === user.id)
-      .map((request) => {
-        const existingItem = purchaseHistory.find((p) => p.purchaseId === request.id);
-        return {
-          id: request.productId,
-          purchaseId: request.id,
-          name: request.productName,
-          price: request.productPrice,
-          category: "Otros" as const,
-          description: "",
-          condition: "Usado",
-          conditionDetail: "",
-          imageUrl: request.productImageUrl || "",
-          sellerId: request.sellerId,
-          sellerName: request.sellerName,
-          sellerRating: 0,
-          active: false,
-          createdAt: request.createdAt,
-          date: request.completedAt || request.createdAt,
-          rated: existingItem?.rated ?? false,
-        };
-      });
-    setPurchaseHistory(computedHistory);
-  }, [purchaseRequests, user.id]);
+    setPurchaseHistory((prevHistory) => {
+      const byPurchaseId = new Map(prevHistory.map((item) => [item.purchaseId, item]));
+
+      return purchaseRequests
+        .filter((request) => request.status === "completed" && request.buyerId === user.id)
+        .map((request) => {
+          const existing = byPurchaseId.get(request.id);
+          const product = products.find((p) => p.id === request.productId);
+
+          return {
+            id: request.productId,
+            purchaseId: request.id,
+            name: request.productName,
+            price: request.productPrice,
+            category: product?.category ?? "Otros",
+            description: product?.description ?? "",
+            condition: product?.condition ?? "Usado",
+            conditionDetail: product?.conditionDetail ?? "",
+            imageUrl: request.productImageUrl || product?.imageUrl || "",
+            sellerId: request.sellerId,
+            sellerName: request.sellerName,
+            sellerRating: product?.sellerRating ?? 0,
+            active: false,
+            createdAt: request.createdAt,
+            date: request.completedAt || request.updatedAt || request.createdAt,
+            rated: existing?.rated ?? false,
+          };
+        });
+    });
+  }, [products, purchaseRequests, user.id]);
 
   const value: AppContextType = {
     products,

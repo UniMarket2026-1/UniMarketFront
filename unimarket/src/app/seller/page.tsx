@@ -44,7 +44,7 @@ export default function SellerPage() {
   return (
     <SellerDashboard
       myProducts={myProducts}
-      sales={sales}
+      sales={sales.filter((sale) => sale.sellerId === user.id)}
       requests={purchaseRequests.filter((request) => request.sellerId === user.id)}
       onEdit={(product) => {
         prepareEdit(product);

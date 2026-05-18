@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { List, History, DollarSign, Package, CheckCircle2, XCircle, Edit3, TrendingUp, Calendar, Plus } from "lucide-react";
+import { List, History, DollarSign, Package, CheckCircle2, XCircle, Edit3, TrendingUp, Plus } from "lucide-react";
 import { Product, Sale } from "@/lib/types";
 import { PurchaseRequest } from "@/lib/types";
 import { ImageWithFallback } from "@/components/shared/ImageWithFallback";
@@ -66,8 +66,9 @@ export function SellerDashboard({
     }
 
     return sales.filter((sale) => {
-      const saleDate = new Date(sale.date);
-      return saleDate >= startDate;
+      const saleTime = new Date(sale.date).getTime();
+      if (Number.isNaN(saleTime)) return true;
+      return saleTime >= startDate.getTime();
     });
   };
 
@@ -447,7 +448,7 @@ export function SellerDashboard({
                 <div className="flex flex-col gap-0.5">
                   <span className="text-sm font-bold text-slate-800">{sale.productName}</span>
                   <div className="flex items-center gap-2 text-xs text-slate-500">
-                    <span>{sale.date}</span>
+                    <span>{new Date(sale.date).toLocaleDateString("es-CO")}</span>
                     <span aria-hidden="true">•</span>
                     <span>
                       {t.seller.buyer}: {sale.buyerName}
