@@ -50,6 +50,8 @@ export interface User {
   suspended?: boolean;
   suspensionReason?: string;
   warnings?: number;
+  description?: string;
+  profileImageUrl?: string;
 }
 
 export interface Rating {
@@ -117,6 +119,7 @@ export interface Chat {
   buyerId: string;
   sellerId: string;
   otherPartyName: string;
+  otherPartyProfileImageUrl?: string;
   lastMessage: string;
 }
 

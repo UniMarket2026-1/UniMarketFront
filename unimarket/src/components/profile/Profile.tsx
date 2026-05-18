@@ -21,6 +21,10 @@ import {
   BadgeCheck,
   ChevronRight,
   LogOut,
+  Edit2,
+  Camera,
+  Save,
+  X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Category } from "@/lib/types";
@@ -49,6 +53,11 @@ export function Profile() {
   const [verificationCode, setVerificationCode] = useState("");
   const [verificationLoading, setVerificationLoading] = useState(false);
   const [verificationMessage, setVerificationMessage] = useState("");
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editDescription, setEditDescription] = useState(user.description || "");
+  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   const iconByCategory: Record<Category, React.ReactNode> = {
     Libros: <BookOpen size={16} aria-hidden="true" />,
@@ -171,6 +180,50 @@ export function Profile() {
     router.push("/");
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setProfileImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveProfileEdit = async () => {
+    try {
+      setIsSavingProfile(true);
+      let profileImageUrl = user.profileImageUrl;
+
+      // If there's a new image, upload it (for now we'll just use data URL)
+      if (profileImagePreview && profileImageFile) {
+        // In production, upload to cloud storage (S3, Cloudinary, etc.)
+        // For now, store as data URL (not ideal for production)
+        profileImageUrl = profileImagePreview;
+      }
+
+      const updatedUser = await apiClient.updateUser(user.id, {
+        description: editDescription,
+        profileImageUrl,
+      });
+
+      setUser((prev) => ({
+        ...prev,
+        ...updatedUser,
+      }));
+
+      setIsEditingProfile(false);
+      setProfileImagePreview(null);
+      setProfileImageFile(null);
+    } catch (error: any) {
+      alert("Error al guardar el perfil: " + (error.message || "Unknown error"));
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
   // Products favorited by the user (from context products list)
   const { products } = useApp();
   const favoriteProducts = products.filter((p) => user.favorites.includes(p.id));
@@ -179,60 +232,145 @@ export function Profile() {
     <div className="flex flex-col gap-6 pb-24">
       {/* User Header */}
       <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center gap-4">
-        <div
-          className="w-24 h-24 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-3xl font-bold border-4 border-white shadow-md"
-          aria-hidden="true"
-        >
-          {user.name.charAt(0)}
-        </div>
-        <div className="flex flex-col items-center">
-          <h2 className="text-xl font-bold text-slate-900">{user.name}</h2>
-          <span className="text-sm text-slate-500 font-medium">{user.email}</span>
-        </div>
+        {isEditingProfile ? (
+          <>
+            {/* Profile Picture Upload */}
+            <div className="relative">
+              <div className="w-24 h-24 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-3xl font-bold border-4 border-white shadow-md overflow-hidden">
+                {profileImagePreview ? (
+                  <img src={profileImagePreview} alt="Profile" className="w-full h-full object-cover" />
+                ) : user.profileImageUrl ? (
+                  <img src={user.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  user.name.charAt(0)
+                )}
+              </div>
+              <label className="absolute bottom-0 right-0 bg-indigo-600 text-white p-2 rounded-full cursor-pointer hover:bg-indigo-700 transition-colors">
+                <Camera size={16} aria-hidden="true" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                  aria-label="Cambiar foto de perfil"
+                />
+              </label>
+            </div>
+
+            <div className="flex flex-col items-center w-full gap-4">
+              <div className="flex flex-col items-center">
+                <h2 className="text-xl font-bold text-slate-900">{user.name}</h2>
+                <span className="text-sm text-slate-500 font-medium">{user.email}</span>
+              </div>
+
+              <textarea
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="Escribe una descripción de ti (máx 200 caracteres)"
+                maxLength={200}
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all resize-none"
+                rows={3}
+              />
+
+              <div className="flex gap-2 w-full">
+                <button
+                  onClick={() => {
+                    setIsEditingProfile(false);
+                    setEditDescription(user.description || "");
+                    setProfileImagePreview(null);
+                    setProfileImageFile(null);
+                  }}
+                  disabled={isSavingProfile}
+                  className="flex-1 px-4 py-2 rounded-xl bg-slate-100 text-slate-800 font-bold hover:bg-slate-200 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <X size={16} aria-hidden="true" />
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSaveProfileEdit}
+                  disabled={isSavingProfile}
+                  className="flex-1 px-4 py-2 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <Save size={16} aria-hidden="true" />
+                  {isSavingProfile ? "Guardando..." : "Guardar"}
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Profile Picture Display */}
+            <div className="w-24 h-24 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-3xl font-bold border-4 border-white shadow-md overflow-hidden">
+              {user.profileImageUrl ? (
+                <img src={user.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                user.name.charAt(0)
+              )}
+            </div>
+            <div className="flex flex-col items-center">
+              <h2 className="text-xl font-bold text-slate-900">{user.name}</h2>
+              <span className="text-sm text-slate-500 font-medium">{user.email}</span>
+            </div>
+
+            {user.description && (
+              <p className="text-sm text-slate-600 text-center italic">{user.description}</p>
+            )}
+
+            <button
+              onClick={() => setIsEditingProfile(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition-colors"
+            >
+              <Edit2 size={16} aria-hidden="true" />
+              Editar perfil
+            </button>
+          </>
+        )}
 
         {/* Tab Buttons */}
-        <div className="flex gap-2 w-full mt-2" role="tablist" aria-label="Secciones del perfil">
-          <button
-            role="tab"
-            aria-selected={activeTab === "profile"}
-            onClick={() => setActiveTab("profile")}
-            className={cn(
-              "flex-1 py-2.5 rounded-xl text-xs font-bold transition-all",
-              activeTab === "profile"
-                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100"
-                : "bg-slate-50 text-slate-500"
-            )}
-          >
-            {t.profile.myProfile}
-          </button>
-          <button
-            role="tab"
-            aria-selected={activeTab === "favorites"}
-            onClick={() => setActiveTab("favorites")}
-            className={cn(
-              "flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5",
-              activeTab === "favorites"
-                ? "bg-rose-500 text-white shadow-lg shadow-rose-100"
-                : "bg-slate-50 text-slate-500"
-            )}
-          >
-            <Heart size={14} fill={activeTab === "favorites" ? "currentColor" : "none"} aria-hidden="true" />
-            {t.profile.favorites}
-          </button>
-          <button
-            role="tab"
-            aria-selected={activeTab === "settings"}
-            onClick={() => setActiveTab("settings")}
-            className={cn(
-              "flex-1 py-2.5 rounded-xl text-xs font-bold transition-all",
-              activeTab === "settings"
-                ? "bg-slate-800 text-white shadow-lg shadow-slate-200"
-                : "bg-slate-50 text-slate-500"
-            )}
-          >
-            {t.profile.settings}
-          </button>
-        </div>
+        {!isEditingProfile && (
+          <div className="flex gap-2 w-full mt-2" role="tablist" aria-label="Secciones del perfil">
+            <button
+              role="tab"
+              aria-selected={activeTab === "profile"}
+              onClick={() => setActiveTab("profile")}
+              className={cn(
+                "flex-1 py-2.5 rounded-xl text-xs font-bold transition-all",
+                activeTab === "profile"
+                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100"
+                  : "bg-slate-50 text-slate-500"
+              )}
+            >
+              {t.profile.myProfile}
+            </button>
+            <button
+              role="tab"
+              aria-selected={activeTab === "favorites"}
+              onClick={() => setActiveTab("favorites")}
+              className={cn(
+                "flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5",
+                activeTab === "favorites"
+                  ? "bg-rose-500 text-white shadow-lg shadow-rose-100"
+                  : "bg-slate-50 text-slate-500"
+              )}
+            >
+              <Heart size={14} fill={activeTab === "favorites" ? "currentColor" : "none"} aria-hidden="true" />
+              {t.profile.favorites}
+            </button>
+            <button
+              role="tab"
+              aria-selected={activeTab === "settings"}
+              onClick={() => setActiveTab("settings")}
+              className={cn(
+                "flex-1 py-2.5 rounded-xl text-xs font-bold transition-all",
+                activeTab === "settings"
+                  ? "bg-slate-800 text-white shadow-lg shadow-slate-200"
+                  : "bg-slate-50 text-slate-500"
+              )}
+            >
+              {t.profile.settings}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Profile Tab */}

@@ -103,6 +103,9 @@ interface AppContextType {
   // Actions – HU-05 Profile/interests
   handleToggleNotification: () => void;
   handleUpdateInterests: (interests: Category[]) => void;
+
+  // Actions – Refresh/Reload
+  refreshProducts: () => Promise<void>;
 }
 
 // ─── Context ─────────────────────────────────────────────────────────────────
@@ -638,6 +641,60 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setUser((prev) => ({ ...prev, interests }));
   }, []);
 
+  // ── Refresh/Reload ────────────────────────────────────────────────────────
+  const refreshProducts = useCallback(async () => {
+    try {
+      const productsResponse = await apiClient.getProducts(1, 100);
+      const normalizedProducts: Product[] = Array.isArray(productsResponse)
+        ? productsResponse
+        : productsResponse?.data ?? [];
+      setProducts(normalizedProducts);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('[refreshProducts] Error:', error);
+    }
+  }, []);
+
+  // Compute sales from completed purchase requests
+  const computedSales = purchaseRequests
+    .filter((request) => request.status === "completed")
+    .map((request) => ({
+      id: request.id,
+      productId: request.productId,
+      productName: request.productName,
+      price: request.productPrice,
+      date: request.completedAt ? new Date(request.completedAt).toLocaleDateString() : new Date().toLocaleDateString(),
+      buyerName: request.buyerName,
+    }));
+
+  // Compute purchase history from completed purchase requests (for buyer)
+  useEffect(() => {
+    const computedHistory: PurchaseItem[] = purchaseRequests
+      .filter((request) => request.status === "completed" && request.buyerId === user.id)
+      .map((request) => {
+        const existingItem = purchaseHistory.find((p) => p.purchaseId === request.id);
+        return {
+          id: request.productId,
+          purchaseId: request.id,
+          name: request.productName,
+          price: request.productPrice,
+          category: "Otros" as const,
+          description: "",
+          condition: "Usado",
+          conditionDetail: "",
+          imageUrl: request.productImageUrl || "",
+          sellerId: request.sellerId,
+          sellerName: request.sellerName,
+          sellerRating: 0,
+          active: false,
+          createdAt: request.createdAt,
+          date: request.completedAt || request.createdAt,
+          rated: existingItem?.rated ?? false,
+        };
+      });
+    setPurchaseHistory(computedHistory);
+  }, [purchaseRequests, user.id]);
+
   const value: AppContextType = {
     products,
     setProducts,
@@ -657,7 +714,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setPurchaseHistory,
     purchaseRequests,
     setPurchaseRequests,
-    sales: [],
+    sales: computedSales,
     userRole,
     setUserRole,
     pendingEdit,
@@ -684,6 +741,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     handleMarkRead,
     handleToggleNotification,
     handleUpdateInterests,
+    refreshProducts,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

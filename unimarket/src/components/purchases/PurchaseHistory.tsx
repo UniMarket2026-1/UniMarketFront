@@ -202,24 +202,38 @@ export function PurchaseHistory() {
 
                 {request.status === "approved" && (
                   <div className="flex flex-col gap-2">
-                    <p className="text-sm text-slate-600 flex items-center gap-2">
-                      <ShieldCheck size={16} className="text-emerald-600" />
-                      El vendedor aprobó la solicitud. Ahora ambos deben ingresar el código de entrega.
-                    </p>
-                    <div className="flex gap-2">
-                      <input
-                        value={codeByRequest[request.id] || ""}
-                        onChange={(event) => setCodeByRequest((prev) => ({ ...prev, [request.id]: event.target.value }))}
-                        placeholder="Código de entrega"
-                        className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none text-center tracking-[0.3em] font-bold"
-                      />
-                      <button
-                        onClick={() => handleConfirmCode(request.id)}
-                        className="px-4 py-3 rounded-xl bg-indigo-600 text-white font-bold"
-                      >
-                        Confirmar
-                      </button>
-                    </div>
+                    {request.buyerConfirmed && !request.sellerConfirmed ? (
+                      <div className="flex flex-col gap-2">
+                        <p className="text-sm text-amber-700 font-medium bg-amber-50 px-3 py-2 rounded-lg">
+                          ⏳ Código ingresado. A la espera de que el vendedor confirme.
+                        </p>
+                      </div>
+                    ) : request.buyerConfirmed && request.sellerConfirmed ? (
+                      <p className="text-sm text-emerald-700 font-medium">
+                        ✓ Ambos han confirmado el código. La compra se está procesando.
+                      </p>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        <p className="text-sm text-slate-600 flex items-center gap-2">
+                          <ShieldCheck size={16} className="text-emerald-600" />
+                          El vendedor aprobó la solicitud. Ahora ambos deben ingresar el código de entrega.
+                        </p>
+                        <div className="flex gap-2">
+                          <input
+                            value={codeByRequest[request.id] || ""}
+                            onChange={(event) => setCodeByRequest((prev) => ({ ...prev, [request.id]: event.target.value }))}
+                            placeholder="Código de entrega"
+                            className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none text-center tracking-[0.3em] font-bold"
+                          />
+                          <button
+                            onClick={() => handleConfirmCode(request.id)}
+                            className="px-4 py-3 rounded-xl bg-indigo-600 text-white font-bold"
+                          >
+                            Confirmar
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 

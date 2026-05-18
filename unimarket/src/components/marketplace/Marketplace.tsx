@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Search, SlidersHorizontal, Heart, Star, Info } from "lucide-react";
 import { Product } from "@/lib/types";
 import { ImageWithFallback } from "@/components/shared/ImageWithFallback";
@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useLang } from "@/i18n/LanguageContext";
 import { useFilters } from "@/hooks/useFilters";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useApp } from "@/contexts/AppContext";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
@@ -23,6 +24,7 @@ interface MarketplaceProps {
 export function Marketplace({ products, currentUserId }: MarketplaceProps) {
   const { t } = useLang();
   const { favorites, isFavorite, toggle } = useFavorites();
+  const { refreshProducts } = useApp();
   const {
     searchTerm,
     setSearchTerm,
@@ -39,6 +41,11 @@ export function Marketplace({ products, currentUserId }: MarketplaceProps) {
 
   const [activeTab, setActiveTab] = useState<"all" | "favorites">("all");
   const [showFilters, setShowFilters] = useState(false);
+
+  // Auto-refresh products when filters change
+  useEffect(() => {
+    refreshProducts();
+  }, [searchTerm, selectedCategory, selectedCondition, maxPrice, refreshProducts]);
 
   const categories = ["Todos", ...PRODUCT_CATEGORIES] as const;
   const conditions = ["Todos", "Nuevo", "Poco usado", "Usado"] as const;

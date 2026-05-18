@@ -42,12 +42,42 @@ export function SellerDashboard({
   const [rejectLoading, setRejectLoading] = useState<Record<string, boolean>>({});
   const [confirmLoading, setConfirmLoading] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState<"listings" | "requests" | "history">("listings");
+  const [salesFilter, setSalesFilter] = useState<"week" | "month" | "year" | "all">("month");
+  const [codeByRequest, setCodeByRequest] = useState<Record<string, string>>({});
+
+  // Helper function to get date range based on filter
+  const getFilteredSales = () => {
+    const now = new Date();
+    let startDate = new Date();
+
+    switch (salesFilter) {
+      case "week":
+        startDate.setDate(now.getDate() - 7);
+        break;
+      case "month":
+        startDate.setDate(now.getDate() - 30);
+        break;
+      case "year":
+        startDate.setFullYear(now.getFullYear() - 1);
+        break;
+      case "all":
+        startDate = new Date("2000-01-01"); // Very old date
+        break;
+    }
+
+    return sales.filter((sale) => {
+      const saleDate = new Date(sale.date);
+      return saleDate >= startDate;
+    });
+  };
+
+  const filteredSales = getFilteredSales();
+  const filteredRevenue = filteredSales.reduce((acc, sale) => acc + sale.price, 0);
 
   const totalRevenue = sales.reduce((acc, sale) => acc + sale.price, 0);
   const activeCount = myProducts.filter((p) => p.active).length;
   const pendingRequests = requests.filter((r) => r.status === "pending");
   const approvedRequests = requests.filter((r) => r.status === "approved");
-  const [codeByRequest, setCodeByRequest] = useState<Record<string, string>>({});
 
   return (
     <div className="flex flex-col gap-6 pb-24">
@@ -372,7 +402,7 @@ export function SellerDashboard({
                   {t.seller.totalRevenue}
                 </span>
                 <span className="text-3xl font-extrabold text-indigo-600">
-                  ${totalRevenue.toLocaleString()}
+                  ${filteredRevenue.toLocaleString()}
                 </span>
               </div>
               <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600">
@@ -380,7 +410,7 @@ export function SellerDashboard({
               </div>
             </div>
             <div className="h-2 bg-slate-100 rounded-full overflow-hidden" aria-hidden="true">
-              <div className="h-full bg-emerald-500 w-[70%]" />
+              <div className="h-full bg-emerald-500" style={{ width: totalRevenue > 0 ? `${Math.min((filteredRevenue / totalRevenue) * 100, 100)}%` : "0%" }} />
             </div>
           </div>
 
@@ -389,14 +419,26 @@ export function SellerDashboard({
               <History size={18} className="text-slate-400" aria-hidden="true" />
               {t.seller.salesHistory}
             </h3>
-            <button className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg">
-              <Calendar size={14} aria-hidden="true" />
-              {t.seller.last30}
-            </button>
+            <div className="flex gap-1.5">
+              {(["week", "month", "year", "all"] as const).map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => setSalesFilter(filter)}
+                  className={cn(
+                    "text-xs font-bold px-3 py-1.5 rounded-lg transition-colors",
+                    salesFilter === filter
+                      ? "bg-indigo-600 text-white"
+                      : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+                  )}
+                >
+                  {filter === "week" ? "Semana" : filter === "month" ? "Mes" : filter === "year" ? "Año" : "Todo"}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="flex flex-col gap-3" role="list" aria-label="Historial de ventas">
-            {sales.map((sale) => (
+            {filteredSales.map((sale) => (
               <div
                 key={sale.id}
                 role="listitem"
@@ -417,7 +459,7 @@ export function SellerDashboard({
                 </span>
               </div>
             ))}
-            {sales.length === 0 && (
+            {filteredSales.length === 0 && (
               <div className="flex flex-col items-center justify-center py-12 text-slate-400">
                 <DollarSign size={48} className="opacity-20 mb-4" aria-hidden="true" />
                 <p>{t.seller.noSales}</p>

@@ -70,11 +70,16 @@ export function ChatView() {
             <ArrowLeft size={20} aria-hidden="true" />
           </button>
           <div className="flex-1 flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold"
-              aria-hidden="true"
-            >
-              {selectedChat.otherPartyName.charAt(0)}
+            <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold overflow-hidden border border-indigo-200">
+              {selectedChat.otherPartyProfileImageUrl ? (
+                <img
+                  src={selectedChat.otherPartyProfileImageUrl}
+                  alt={selectedChat.otherPartyName}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span aria-hidden="true">{selectedChat.otherPartyName.charAt(0)}</span>
+              )}
             </div>
             <div className="flex flex-col">
               <span className="font-bold text-slate-900 leading-none">
@@ -189,11 +194,16 @@ export function ChatView() {
             aria-label={`Chat con ${chat.otherPartyName} sobre ${chat.productName}`}
           >
             <div className="relative">
-              <div
-                className="w-14 h-14 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-xl"
-                aria-hidden="true"
-              >
-                {chat.otherPartyName.charAt(0)}
+              <div className="w-14 h-14 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-xl overflow-hidden border border-indigo-100">
+                {chat.otherPartyProfileImageUrl ? (
+                  <img
+                    src={chat.otherPartyProfileImageUrl}
+                    alt={chat.otherPartyName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span aria-hidden="true">{chat.otherPartyName.charAt(0)}</span>
+                )}
               </div>
               <div
                 className="absolute bottom-0 right-0 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full"
