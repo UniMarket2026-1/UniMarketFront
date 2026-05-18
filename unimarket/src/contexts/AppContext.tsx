@@ -133,6 +133,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [purchaseRequests, setPurchaseRequests] = useState<PurchaseRequest[]>([]);
   const [userRole, setUserRole] = useState<"student" | "admin">("student");
   const [pendingEdit, setPendingEdit] = useState<Partial<Product> | null>(null);
+  const [inFlightActions, setInFlightActions] = useState<Record<string, boolean>>({});
 
   // Report modal
   const [reportModalOpen, setReportModalOpen] = useState(false);
@@ -240,6 +241,112 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     loadRemoteState();
   }, [loadRemoteState]);
+
+  // Polling for near-real-time updates: chats, messages, purchase requests, and products
+  useEffect(() => {
+    let chatInterval: number | undefined;
+    let productInterval: number | undefined;
+    const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
+
+    if (token && user.id) {
+      // chats & requests every 5s
+      chatInterval = window.setInterval(async () => {
+        try {
+          const remoteChats = await apiClient.getUserChats(user.id);
+          const normalizedChats: Chat[] = Array.isArray(remoteChats) ? remoteChats : (remoteChats?.data ?? []);
+
+          // update chats list and fetch messages for changed chats
+          setChats((prevChats) => {
+            const merged = normalizedChats;
+            return merged;
+          });
+
+          // fetch messages per chat and detect new ones
+          const messagesByChat: Record<string, Message[]> = { ...messages };
+          await Promise.all(
+            normalizedChats.map(async (chat) => {
+              try {
+                const chatMessages = await apiClient.getChatMessages(chat.id);
+                const remoteMessages: Message[] = Array.isArray(chatMessages)
+                  ? chatMessages
+                  : chatMessages?.data ?? [];
+
+                const existing = messages[chat.id] ?? [];
+                if (remoteMessages.length > existing.length) {
+                  // new messages arrived
+                  messagesByChat[chat.id] = remoteMessages;
+                  // add a simple notification
+                  setNotifications((prev) => [
+                    {
+                      id: `n_msg_${chat.id}_${Date.now()}`,
+                      type: "message",
+                      title: `Nuevo mensaje de ${chat.otherPartyName}`,
+                      body: remoteMessages[remoteMessages.length - 1]?.text ?? "",
+                      read: false,
+                      createdAt: new Date().toISOString(),
+                    },
+                    ...prev,
+                  ]);
+                } else {
+                  messagesByChat[chat.id] = existing;
+                }
+              } catch {
+                // ignore per-chat failures
+              }
+            })
+          );
+          setMessages(messagesByChat);
+
+          // purchase requests
+          try {
+            const requests = await apiClient.getMyPurchaseRequests();
+            const remoteRequests = Array.isArray(requests) ? requests : requests?.data ?? [];
+            // detect newly created or changed requests
+            const prevMap = Object.fromEntries(purchaseRequests.map((r) => [r.id, r]));
+            remoteRequests.forEach((r: PurchaseRequest) => {
+              const prev = prevMap[r.id];
+              if (!prev) {
+                setNotifications((prevN) => [
+                  { id: `n_req_${r.id}_${Date.now()}`, type: "purchase", title: "Nueva solicitud de compra", body: `${r.buyerName} solicitó ${r.productName}`, read: false, createdAt: new Date().toISOString() },
+                  ...prevN,
+                ]);
+              } else if (prev.status !== r.status) {
+                setNotifications((prevN) => [
+                  { id: `n_req_change_${r.id}_${Date.now()}`, type: "purchase", title: "Cambio en solicitud", body: `${r.productName} cambió a ${r.status}`, read: false, createdAt: new Date().toISOString() },
+                  ...prevN,
+                ]);
+              }
+            });
+            setPurchaseRequests(remoteRequests);
+          } catch {
+            // ignore
+          }
+        } catch {
+          // ignore polling errors
+        }
+      }, 5000) as unknown as number;
+
+      // products every 10s to refresh listings when filters change elsewhere
+      productInterval = window.setInterval(async () => {
+        try {
+          const productsResponse = await apiClient.getProducts(1, 100);
+          const remoteProducts = Array.isArray(productsResponse?.data)
+            ? productsResponse.data
+            : Array.isArray(productsResponse)
+            ? productsResponse
+            : [];
+          if (remoteProducts.length > 0) setProducts(remoteProducts);
+        } catch {
+          // ignore
+        }
+      }, 10000) as unknown as number;
+    }
+
+    return () => {
+      if (chatInterval) window.clearInterval(chatInterval);
+      if (productInterval) window.clearInterval(productInterval);
+    };
+  }, [user.id, messages, purchaseRequests]);
 
   // ── HU-01: Persist favorites in localStorage ──────────────────────────────
   useEffect(() => {

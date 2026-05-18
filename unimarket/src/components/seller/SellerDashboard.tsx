@@ -38,6 +38,9 @@ export function SellerDashboard({
   onNewProduct,
 }: SellerDashboardProps) {
   const { t } = useLang();
+  const [approveLoading, setApproveLoading] = useState<Record<string, boolean>>({});
+  const [rejectLoading, setRejectLoading] = useState<Record<string, boolean>>({});
+  const [confirmLoading, setConfirmLoading] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState<"listings" | "requests" | "history">("listings");
 
   const totalRevenue = sales.reduce((acc, sale) => acc + sale.price, 0);
@@ -238,16 +241,44 @@ export function SellerDashboard({
                     </div>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => onApproveRequest(request.id)}
-                        className="flex-1 px-4 py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-700 transition-all"
+                        onClick={async () => {
+                          if (approveLoading[request.id]) return;
+                          setApproveLoading((s) => ({ ...s, [request.id]: true }));
+                          try {
+                            await onApproveRequest(request.id);
+                          } finally {
+                            setApproveLoading((s) => ({ ...s, [request.id]: false }));
+                          }
+                        }}
+                        disabled={approveLoading[request.id]}
+                        className={cn(
+                          "flex-1 px-4 py-3 rounded-xl text-white font-bold text-sm transition-all",
+                          approveLoading[request.id]
+                            ? "bg-emerald-400 cursor-not-allowed"
+                            : "bg-emerald-600 hover:bg-emerald-700"
+                        )}
                       >
-                        Aprobar
+                        {approveLoading[request.id] ? "Procesando..." : "Aprobar"}
                       </button>
                       <button
-                        onClick={() => onRejectRequest(request.id)}
-                        className="flex-1 px-4 py-3 rounded-xl bg-rose-600 text-white font-bold text-sm hover:bg-rose-700 transition-all"
+                        onClick={async () => {
+                          if (rejectLoading[request.id]) return;
+                          setRejectLoading((s) => ({ ...s, [request.id]: true }));
+                          try {
+                            await onRejectRequest(request.id);
+                          } finally {
+                            setRejectLoading((s) => ({ ...s, [request.id]: false }));
+                          }
+                        }}
+                        disabled={rejectLoading[request.id]}
+                        className={cn(
+                          "flex-1 px-4 py-3 rounded-xl text-white font-bold text-sm transition-all",
+                          rejectLoading[request.id]
+                            ? "bg-rose-400 cursor-not-allowed"
+                            : "bg-rose-600 hover:bg-rose-700"
+                        )}
                       >
-                        Rechazar
+                        {rejectLoading[request.id] ? "Procesando..." : "Rechazar"}
                       </button>
                     </div>
                   </div>
@@ -279,10 +310,24 @@ export function SellerDashboard({
                         className="w-full px-4 py-3 rounded-xl border border-emerald-300 text-center tracking-[0.3em] font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
                       />
                       <button
-                        onClick={() => onConfirmRequestCode(request.id, codeByRequest[request.id] || "")}
-                        className="px-4 py-3 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-all"
+                        onClick={async () => {
+                          if (confirmLoading[request.id]) return;
+                          setConfirmLoading((s) => ({ ...s, [request.id]: true }));
+                          try {
+                            await onConfirmRequestCode(request.id, codeByRequest[request.id] || "");
+                          } finally {
+                            setConfirmLoading((s) => ({ ...s, [request.id]: false }));
+                          }
+                        }}
+                        disabled={confirmLoading[request.id]}
+                        className={cn(
+                          "px-4 py-3 rounded-xl text-white font-bold text-sm transition-all",
+                          confirmLoading[request.id]
+                            ? "bg-indigo-400 cursor-not-allowed"
+                            : "bg-indigo-600 hover:bg-indigo-700"
+                        )}
                       >
-                        Confirmar código
+                        {confirmLoading[request.id] ? "Confirmando..." : "Confirmar código"}
                       </button>
                     </div>
                   </div>

@@ -81,6 +81,7 @@ export function PublishProduct({ initialData, isEditing = false, onSave }: Publi
 
   // AI state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const categories: Category[] = PRODUCT_CATEGORIES;
   const conditions: ProductCondition[] = PRODUCT_CONDITIONS;
@@ -296,9 +297,17 @@ export function PublishProduct({ initialData, isEditing = false, onSave }: Publi
       toast.error("Por favor completa todos los campos obligatorios");
       return;
     }
-    await onSave({ ...formData, ...(isEditing && initialData?.id ? { id: initialData.id } : {}) });
-    toast.success(isEditing ? "Producto actualizado correctamente" : "¡Producto publicado con éxito!");
-    router.push("/seller");
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await onSave({ ...formData, ...(isEditing && initialData?.id ? { id: initialData.id } : {}) });
+      toast.success(isEditing ? "Producto actualizado correctamente" : "¡Producto publicado con éxito!");
+      router.push("/seller");
+    } catch (err) {
+      toast.error("Error al publicar el producto");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Image upload simulation — HU-10
@@ -890,28 +899,33 @@ export function PublishProduct({ initialData, isEditing = false, onSave }: Publi
         {/* Submit — HU-10 */}
         <div className="sticky bottom-4 pt-2">
           <button
-            type="submit"
-            disabled={!isValid}
-            className={cn(
-              "w-full font-bold py-4 rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 text-lg",
-              isValid
-                ? "bg-gradient-to-r from-indigo-600 to-indigo-700 text-white hover:from-indigo-700 hover:to-indigo-800 shadow-indigo-200"
-                : "bg-slate-200 text-slate-400 cursor-not-allowed"
-            )}
-            aria-disabled={!isValid}
-          >
-            {isValid ? (
-              <>
-                {isEditing ? <Save size={24} aria-hidden="true" /> : <Check size={24} aria-hidden="true" />}
-                {isEditing ? "Guardar Cambios" : "Publicar Ahora"}
-              </>
-            ) : (
-              <>
-                <AlertCircle size={20} aria-hidden="true" />
-                Completa los campos requeridos
-              </>
-            )}
-          </button>
+              type="submit"
+              disabled={!isValid || isSubmitting}
+              className={cn(
+                "w-full font-bold py-4 rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 text-lg",
+                isValid && !isSubmitting
+                  ? "bg-gradient-to-r from-indigo-600 to-indigo-700 text-white hover:from-indigo-700 hover:to-indigo-800 shadow-indigo-200"
+                  : "bg-slate-200 text-slate-400 cursor-not-allowed"
+              )}
+              aria-disabled={!isValid || isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={20} className="animate-spin" />
+                  Publicando...
+                </>
+              ) : isValid ? (
+                <>
+                  {isEditing ? <Save size={24} aria-hidden="true" /> : <Check size={24} aria-hidden="true" />}
+                  {isEditing ? "Guardar Cambios" : "Publicar Ahora"}
+                </>
+              ) : (
+                <>
+                  <AlertCircle size={20} aria-hidden="true" />
+                  Completa los campos requeridos
+                </>
+              )}
+            </button>
           {isValid && (
             <p className="text-center text-xs text-emerald-600 font-medium mt-2 flex items-center justify-center gap-1">
               <Check size={14} aria-hidden="true" />
